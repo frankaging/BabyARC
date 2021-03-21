@@ -1,3 +1,5 @@
+.DS_Store
+code/dataset/tmp/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
