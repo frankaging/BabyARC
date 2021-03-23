@@ -517,10 +517,11 @@ class Canvas:
 
                 for i in range(r, r+image_t.shape[0]):
                     for j in range(c, c+image_t.shape[1]):
-                        if image_t[i-r, j-c] != 0 and ret_canvas[i,j] == 0:
-                            ret_canvas[i,j] = 1
-                        else:
-                            return False
+                        if image_t[i-r, j-c] != 0:
+                            if ret_canvas[i,j] == 0:
+                                ret_canvas[i,j] = 1
+                            else:
+                                return False
         else:
             # the mask need to generated
             for oid in self.oid_map.keys():
@@ -535,11 +536,12 @@ class Canvas:
 
                 for i in range(r, r+image_t.shape[0]):
                     for j in range(c, c+image_t.shape[1]):
-                        if image_t[i-r, j-c] != 0 and ret_canvas[i,j] == 0:
-                            # also look the bounds
-                            ret_canvas[i,j] = 1
-                        else:
-                            return False
+                        if image_t[i-r, j-c] != 0:
+                            if ret_canvas[i,j] == 0:
+                                # also look the bounds
+                                ret_canvas[i,j] = 1
+                            else:
+                                return False
                 
                 # after check we mark boundarys
                 for i in range(r, r+image_t.shape[0]):
