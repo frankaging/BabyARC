@@ -564,6 +564,23 @@ class Canvas:
             return False
         return True
     
+    def generate_objs_mask(self):
+        """
+        Simply generate object mask considering shapes and positions.
+        """
+        objs_mask_map = OrderedDict({ })
+        for oid in self.oid_map.keys():
+            ret_canvas = self.init_canvas.clone()
+            (r, c) = self.opos_map[oid]
+            obj = self.oid_map[oid]
+            image_t = obj.image_t
+            for i in range(r, r+image_t.shape[0]):
+                for j in range(c, c+image_t.shape[1]):
+                    if image_t[i-r,j-c] != self.background_color:
+                        ret_canvas[i,j] = 1
+            objs_mask_map[oid] = ret_canvas
+        return objs_mask_map
+    
     def generate_mask_inplace(self, obj_ctx_lists, connect_allow=False):
         ret_canvas = self.init_canvas.clone()
         for obj_ctx in obj_ctx_lists:
@@ -660,6 +677,7 @@ class Canvas:
             # provide a full parse of relation
             repre["partial_relation_edges"] = edges
             repre["image_t"] = updated_canvas
+            repre["id_object_mask"] = self.generate_objs_mask()
             return repre
                     
     def render(self, obj_mask=None, is_plot=True, minimum_cover=False):
