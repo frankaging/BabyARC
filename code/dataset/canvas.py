@@ -20,9 +20,9 @@ import hashlib
 import uuid 
 import ast
 # Baby-ARC related imports
-from constants import *
-from utils import *
-from objects import *
+from .constants import *
+from .utils import *
+from .objects import *
 
 class Canvas:
     """

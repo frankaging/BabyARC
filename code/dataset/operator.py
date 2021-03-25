@@ -20,10 +20,10 @@ import hashlib
 import uuid 
 import ast
 # Baby-ARC related imports
-from constants import *
-from utils import *
-from objects import *
-from canvas import *
+from .constants import *
+from .utils import *
+from .objects import *
+from .canvas import *
 
 class OperatorEngine(object):
     

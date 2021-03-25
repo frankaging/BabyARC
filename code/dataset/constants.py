@@ -15,4 +15,4 @@ arc_data_train_path = os.path.join(arc_data_dirname, "training")
 
 arc_data_eval_path = os.path.join(arc_data_dirname, "evaluation")
 
-tmp_data_dirname = os.path.join("tmp/")
+tmp_data_dirname = os.path.join("/concept_env/datasets/")
