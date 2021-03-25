@@ -24,6 +24,8 @@ from .constants import *
 from .utils import *
 from .objects import *
 from .canvas import *
+from itertools import product
+import re
 
 class BabyARCDataset(object):
     """
@@ -41,7 +43,8 @@ class BabyARCDataset(object):
                                    "IsInside", "IsTouch"],
                  num_pool = [2,3,4],
                  sparse_prob = 0.3,
-                 noise_level = 1):
+                 noise_level = 1, 
+                 canvas_size = None): # if canvas size is provided, square shape canvas is sampled.
         if data_dir == None:
             logger.info("Creating new BabyARC dataset by loading in pretrained objects.")
             self.training_objs = torch.load(pretrained_obj_cache)
@@ -62,6 +65,9 @@ class BabyARCDataset(object):
             self.noise_level = noise_level
         self.data_dir = data_dir # if it is None, we need to generate new dataset
         self.save_directory = save_directory
+        if canvas_size:
+            logger.info(f"Create BabyARC canvas with fixed width and height = {canvas_size}.")
+        self.canvas_size = canvas_size
     
     def sample_single_core_edges(self):
         relation_num = random.choice(self.num_pool)
@@ -93,10 +99,14 @@ class BabyARCDataset(object):
         relation_num = len(edges)
         nodes = OrderedDict({ })
 
-        if relation_num >= 3:
-            test_canvas = CanvasEngine().sameple_canvas_by_size(min_length=min_length, max_length=max_length)[0]
+        if self.canvas_size:
+            test_canvas = CanvasEngine().sameple_canvas_by_size(min_length=self.canvas_size, 
+                                                                max_length=self.canvas_size)[0]
         else:
-            test_canvas = CanvasEngine().sameple_canvas()[0]
+            if relation_num >= 3:
+                test_canvas = CanvasEngine().sameple_canvas_by_size(min_length=min_length, max_length=max_length)[0]
+            else:
+                test_canvas = CanvasEngine().sameple_canvas()[0]
 
         placed_objs = set([])
         current_id = 0
