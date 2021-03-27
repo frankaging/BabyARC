@@ -142,7 +142,7 @@ class Canvas:
             for pos in random_pos_iter:
                 i = pos[0]
                 j = pos[1]
-                if self._check_exclusive(i, j, to_placement_obj=to_placement_obj):
+                if self._check_exclusive(i, j, to_placement_obj=to_placement_obj, connect_allow=connect_allow):
                     potential_pool.append((i, j))
                     return i, j
         else:
@@ -152,7 +152,7 @@ class Canvas:
                         random_pos_iter.append(i)
                 random.shuffle(random_pos_iter)
                 for i in random_pos_iter:
-                    if self._check_exclusive(i, p_c, to_placement_obj=to_placement_obj):
+                    if self._check_exclusive(i, p_c, to_placement_obj=to_placement_obj, connect_allow=connect_allow):
                         return i, p_c
             elif p_c == -1:
                 random_pos_iter = []
@@ -160,14 +160,9 @@ class Canvas:
                         random_pos_iter.append(i)
                 random.shuffle(random_pos_iter)
                 for i in random_pos_iter:
-                    if self._check_exclusive(p_r, i, to_placement_obj=to_placement_obj):
+                    if self._check_exclusive(p_r, i, to_placement_obj=to_placement_obj, connect_allow=connect_allow):
                         return p_r, i
-        # randomly select one
-        # if len(potential_pool) > 0:
-        #     (proposed_p_r, proposed_p_r) = random.choice(potential_pool)
-        # else:
         return -1, -1
-        # return proposed_p_r, proposed_p_r
     
     def _propose_position_same_row(self, o_r, o_c, p_r, p_c, rel_r, rel_c, 
                                    connect_allow=False, to_placement_obj=None, 
@@ -188,7 +183,7 @@ class Canvas:
                     random_pos_iter.append(i)
             random.shuffle(random_pos_iter)
             for i in random_pos_iter:
-                if self._check_exclusive(p_r, i, to_placement_obj=to_placement_obj):
+                if self._check_exclusive(p_r, i, to_placement_obj=to_placement_obj, connect_allow=connect_allow):
                     potential_pool.append((p_r, i))
                     return p_r, i
         return -1, -1
@@ -212,8 +207,7 @@ class Canvas:
                     random_pos_iter.append(i)
             random.shuffle(random_pos_iter)
             for i in random_pos_iter:
-                if self._check_exclusive(i, p_c, to_placement_obj=to_placement_obj):
-                    # potential_pool.append((i, p_c))
+                if self._check_exclusive(i, p_c, to_placement_obj=to_placement_obj, connect_allow=connect_allow):
                     return i, p_c
         return -1, -1
     
@@ -303,7 +297,8 @@ class Canvas:
         
     def _placement_strategy(self, c_r, c_c, o_r, o_c, position_tags, p_r, p_c, 
                             placement_rule=None, to_placement_obj=None, 
-                            to_relate_objs=[], consider_tag=False):
+                            to_relate_objs=[], consider_tag=False, 
+                            connect_allow=False):
         
         # this part still has some bugs, may not be used for now.
         # some cases we can bypass the pos tag
@@ -340,15 +335,15 @@ class Canvas:
                 p_c = c_c - o_c
                 if p_c < 0:
                     return -1 # OOB
-        
-        connect_allow = False
+
         if p_r == -1 or p_c == -1:
             if placement_rule == None or \
                 placement_rule == "SameAll" or \
                 placement_rule == "SameShape" or \
                 placement_rule == "SameColor":
                     p_r, p_c = self._propose_position_simple(o_r, o_c, p_r, p_c, 
-                                                             to_placement_obj=to_placement_obj)
+                                                             to_placement_obj=to_placement_obj, 
+                                                             connect_allow=connect_allow)
             else:
                 # otherwise, we need to re-propose
                 if placement_rule == "SameRow":
@@ -356,13 +351,15 @@ class Canvas:
                     rel_pos = self.opos_map[to_relate_obj]
                     rel_r, rel_c = rel_pos[0], rel_pos[1]
                     p_r, p_c = self._propose_position_same_row(o_r, o_c, p_r, p_c, rel_r, rel_c,
-                                                               to_placement_obj=to_placement_obj)
+                                                               to_placement_obj=to_placement_obj, 
+                                                               connect_allow=connect_allow)
                 elif placement_rule == "SameCol":
                     to_relate_obj = to_relate_objs[0]
                     rel_pos = self.opos_map[to_relate_obj]
                     rel_r, rel_c = rel_pos[0], rel_pos[1]
                     p_r, p_c = self._propose_position_same_col(o_r, o_c, p_r, p_c, rel_r, rel_c,
-                                                               to_placement_obj=to_placement_obj)
+                                                               to_placement_obj=to_placement_obj, 
+                                                               connect_allow=connect_allow)
                 elif placement_rule == "IsInside":
                     to_relate_obj = to_relate_objs[0]
                     rel_pos = self.opos_map[to_relate_obj]
@@ -371,7 +368,8 @@ class Canvas:
                     rel_r, rel_c = rel_obj.image_t.shape[0], rel_obj.image_t.shape[1]
                     p_r, p_c = self._propose_position_is_inside(o_r, o_c, p_r, p_c, rel_r, rel_c,
                                                                 rel_p_r, rel_p_c,
-                                                                to_placement_obj=to_placement_obj)
+                                                                to_placement_obj=to_placement_obj, 
+                                                                connect_allow=connect_allow)
                 elif placement_rule == "IsOutside":
                     to_relate_obj = to_relate_objs[0]
                     rel_pos = self.opos_map[to_relate_obj]
@@ -380,7 +378,8 @@ class Canvas:
                     rel_r, rel_c = rel_obj.image_t.shape[0], rel_obj.image_t.shape[1]
                     p_r, p_c = self._propose_position_is_outside(o_r, o_c, p_r, p_c, rel_r, rel_c,
                                                                  rel_p_r, rel_p_c,
-                                                                 to_placement_obj=to_placement_obj)
+                                                                 to_placement_obj=to_placement_obj, 
+                                                                 connect_allow=connect_allow)
                 elif placement_rule == "IsTouch":
                     connect_allow = True
                     to_relate_obj = to_relate_objs[0]
@@ -420,7 +419,8 @@ class Canvas:
             return (placement_r, placement_c)
         return -1
     
-    def placement(self, to_placement_obj, to_relate_objs=[], placement_rule=None, merge_type="None", consider_tag=True):
+    def placement(self, to_placement_obj, to_relate_objs=[], placement_rule=None, merge_type="None", 
+                  consider_tag=True, connect_allow=False):
         curr_obj = copy.deepcopy(to_placement_obj)
         canvas_r = self.init_canvas.shape[0]
         canvas_c = self.init_canvas.shape[1]
@@ -443,7 +443,9 @@ class Canvas:
                                          curr_obj.position_tags, 
                                          placement_r, placement_c, 
                                          placement_rule=placement_rule,
-                                         to_placement_obj=to_placement_obj, consider_tag=consider_tag)
+                                         to_placement_obj=to_placement_obj, 
+                                         consider_tag=consider_tag, 
+                                         connect_allow=connect_allow)
         else:
             if placement_rule == "SameRow" or\
                 placement_rule == "SameCol":
@@ -453,7 +455,8 @@ class Canvas:
                                              placement_r, placement_c, 
                                              placement_rule=placement_rule,
                                              to_placement_obj=to_placement_obj,
-                                             to_relate_objs=to_relate_objs)
+                                             to_relate_objs=to_relate_objs, 
+                                             connect_allow=connect_allow)
             elif placement_rule == "SubsetOf":
                 pass
             elif placement_rule == "IsInside":
@@ -464,7 +467,8 @@ class Canvas:
                                              placement_r, placement_c, 
                                              placement_rule=placement_rule,
                                              to_placement_obj=to_placement_obj,
-                                             to_relate_objs=to_relate_objs)
+                                             to_relate_objs=to_relate_objs, 
+                                             connect_allow=connect_allow)
             elif placement_rule == "IsOutside":
                 # we loop through to see if there is any possibilities
                 placement_results = \
@@ -473,7 +477,8 @@ class Canvas:
                                              placement_r, placement_c, 
                                              placement_rule=placement_rule,
                                              to_placement_obj=to_placement_obj,
-                                             to_relate_objs=to_relate_objs)
+                                             to_relate_objs=to_relate_objs, 
+                                             connect_allow=connect_allow)
             elif placement_rule == "IsTouch":
                 # we loop through to see if there is any possibilities
                 placement_results = \

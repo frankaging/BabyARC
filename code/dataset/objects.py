@@ -392,7 +392,7 @@ class ObjectEngine:
                 pass
         return ret
     
-    def sample_objs_with_reactangle(self, n=1, w_lims=[5,10], h_lims=[5,10], thickness=1, rainbow_prob=0.2):
+    def sample_objs_with_rectangle(self, n=1, w_lims=[5,10], h_lims=[5,10], thickness=1, rainbow_prob=0.2):
         
         objs_sampled = []
         for i in range(n):

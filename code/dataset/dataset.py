@@ -49,8 +49,11 @@ class BabyARCDataset(object):
             logger.info("Creating new BabyARC dataset by loading in pretrained objects.")
             self.training_objs = torch.load(pretrained_obj_cache)
             logger.info(f"Loading the object engine and canvas engine with "
-                        "a limit of object number {object_limit}, "
-                        "background_color={int(dataset_background_color)}.")
+                        f"a limit of object number {object_limit}, "
+                        f"background_color={int(dataset_background_color)}.")
+            if object_limit == 0:
+                logger.info("WARNING: 0 object requested from pretrained objects file. Overwrite to 1 for safety.")
+                object_limit = 1 # overwrite to 1 for simplicity
             if object_limit:
                 self.ObE = ObjectEngine(self.training_objs[:object_limit], 
                                         background_c=dataset_background_color)
@@ -95,7 +98,9 @@ class BabyARCDataset(object):
                     current_obj_count += 1
         return edges
     
-    def sample_single_canvas_by_core_edges(self, edges, is_plot=True, min_length=20, max_length=30):
+    def sample_single_canvas_by_core_edges(self, edges, is_plot=True, 
+                                           min_length=20, max_length=30, 
+                                           allow_connect=False):
         relation_num = len(edges)
         nodes = OrderedDict({ })
 
@@ -107,7 +112,7 @@ class BabyARCDataset(object):
                 test_canvas = CanvasEngine().sameple_canvas_by_size(min_length=min_length, max_length=max_length)[0]
             else:
                 test_canvas = CanvasEngine().sameple_canvas()[0]
-
+        placement_result = -1 # default to non-placement
         placed_objs = set([])
         current_id = 0
         for edge, rel in edges.items():
@@ -165,23 +170,25 @@ class BabyARCDataset(object):
                         obj_refer = self.ObE.sample_objs_with_line(n=1, len_lims=len_lims, 
                                                               thickness=thickness, 
                                                               direction=direction)[0]
-                        placement_result = test_canvas.placement(obj_refer, consider_tag=False) # place old obj with free pos
+                        placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
+                                                                 connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
                             break
-                    elif node_right.startswith("reactangle"):
+                    elif node_right.startswith("rectangle"):
                         rect_spec = node_right.split("_")[-1]
                         rect_spec = ast.literal_eval(rect_spec)
                         if rect_spec[0] != -1:
-                            w_lims = [rect_spec[1], rect_spec[1]]
+                            w_lims = [rect_spec[0], rect_spec[0]]
                         else:
-                            w_lims = [5, test_canvas.init_canvas.shape[1]]
+                            w_lims = [5, test_canvas.init_canvas.shape[1]-1]
                         if rect_spec[1] != -1:
-                            h_lims = [rect_spec[0], rect_spec[0]]
+                            h_lims = [rect_spec[1], rect_spec[1]]
                         else:
-                            h_lims = [5, test_canvas.init_canvas.shape[0]]    
-                        obj_refer = self.ObE.sample_objs_with_reactangle(n=1, w_lims=w_lims, h_lims=h_lims, 
-                                                                    thickness=1, rainbow_prob=0.2)
-                        placement_result = test_canvas.placement(obj_refer, consider_tag=False) # place old obj with free pos
+                            h_lims = [5, test_canvas.init_canvas.shape[0]-1]    
+                        obj_refer = self.ObE.sample_objs_with_rectangle(n=1, w_lims=w_lims, h_lims=h_lims, 
+                                                                         thickness=1, rainbow_prob=0.2)[0]
+                        placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
+                                                                 connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
                             break
                     elif node_right.startswith("enclosure"):
@@ -376,7 +383,7 @@ class BabyARCDataset(object):
             if new_node_count == 2:
                 if rel_n == "IsInside":
                     # this is to place the object inside referring to the outside object
-                    out_obj = self.ObE.sample_objs_with_reactangle(n=1, thickness=1, rainbow_prob=0.3, 
+                    out_obj = self.ObE.sample_objs_with_rectangle(n=1, thickness=1, rainbow_prob=0.3, 
                                                               w_lims=[6,8], h_lims=[6,8])[0] 
                     placement_result = test_canvas.placement(out_obj)
                     if placement_result == -1:
@@ -497,7 +504,7 @@ class BabyARCDataset(object):
                     else:
                         # the new obj is the outside obj
                         # this is to place the object inside referring to the outside object
-                        out_obj = self.ObE.sample_objs_with_reactangle(n=1, thickness=1, rainbow_prob=0.3, 
+                        out_obj = self.ObE.sample_objs_with_rectangle(n=1, thickness=1, rainbow_prob=0.3, 
                                                                   w_lims=[8,10], h_lims=[8,10])[0] 
                         placement_result = test_canvas.placement(out_obj, 
                                                                  to_relate_objs=[nodes[node_old]], 
