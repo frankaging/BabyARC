@@ -20,9 +20,13 @@ import hashlib
 import uuid 
 import ast
 # Baby-ARC related imports
-from .constants import *
-from .utils import *
-
+try:
+    from .constants import *
+    from .utils import *
+except:
+    from constants import *
+    from utils import *
+    
 import logging
 FORMAT = "%(asctime)-15s %(message)s"
 logging.basicConfig(format=FORMAT, level=logging.DEBUG,

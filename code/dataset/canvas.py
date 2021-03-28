@@ -20,9 +20,14 @@ import hashlib
 import uuid 
 import ast
 # Baby-ARC related imports
-from .constants import *
-from .utils import *
-from .objects import *
+try:
+    from .constants import *
+    from .utils import *
+    from .objects import *
+except:
+    from constants import *
+    from utils import *
+    from objects import *
 
 class Canvas:
     """
@@ -630,13 +635,36 @@ class Canvas:
         # print(ret_canvas)
         # print("*****")
         
-    def repr_as_dict(self, nodes, edges, minimum_cover=False):
+    def repr_as_dict(self, nodes=None, edges=None, minimum_cover=False):
         """
         We will serialize this canvas as a dict.
         Nodes contains outside namings of those labeled objects.
         Edges contains relations between objects recorded.
         """
         repre = OrderedDict({ })
+        
+        if nodes == None and edges == None:
+            # we will use current info
+            oid_image_map = OrderedDict({ })
+            for k, v in self.oid_map.items():
+                oid_image_map[k] = v.image_t
+            repre["id_object_map"] = oid_image_map
+
+            updated_canvas, r_diff, c_diff = self.render(is_plot=False, minimum_cover=minimum_cover)
+            oid_position_map = OrderedDict({ })
+            for k, v in self.opos_map.items():
+                oid_position_map[k] = torch.tensor([v[0], v[1]])
+            repre["id_position_map"] = oid_position_map
+
+            repre["background_color"] = self.background_color
+            repre["node_id_map"] = copy.deepcopy(self.node_id_map)
+
+            # we note this as partial as we don't
+            # provide a full parse of relation
+            repre["partial_relation_edges"] = copy.deepcopy(self.partial_relation_edges)
+            repre["image_t"] = updated_canvas
+            repre["id_object_mask"] = self.generate_objs_mask()
+            return repre
         
         if minimum_cover:
             """

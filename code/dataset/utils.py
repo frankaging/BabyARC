@@ -1,9 +1,13 @@
 import torch
 import matplotlib.pylab as plt
 # Baby-ARC related imports
-from .constants import *
-from .objects import *
-
+try:
+    from .constants import *
+    from .objects import *
+except:
+    from constants import *
+    from objects import *
+    
 # general util functions like plots, helpers to manipulate matrics
 def remove_duplicates(seq):
     seen = set()
