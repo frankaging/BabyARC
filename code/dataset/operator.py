@@ -390,7 +390,7 @@ class OperatorEngine(object):
             new_canvas.opos_map[oid] = new_pos
         return new_canvas
     
-    def _rotate_obj_position(self, obj_t_in, old_pos_in, rotation):
+    def _rotate_obj_position(self, obj_t_in, old_pos_in, rotation, center_rotate=False):
         """
         Rotate by the center of the object.
         """
@@ -401,7 +401,10 @@ class OperatorEngine(object):
         new_r = center_r - int(new_obj_t.shape[0]/2)
         new_c = center_c - int(new_obj_t.shape[1]/2)
         
-        return torch.tensor([new_r, new_c]), new_obj_t
+        if center_rotate:
+            return torch.tensor([new_r, new_c]), new_obj_t
+        else:
+            return torch.tensor([old_pos_in[0], old_pos_in[1]]), new_obj_t
     
     def _select_position_obj(self, canvas, obj, condition):
         _id = canvas.node_id_map[obj]
@@ -584,13 +587,13 @@ class OperatorEngine(object):
         Rotate whole canvas, selector is not needed!
         """
         rotate_code = {
-            0:"#FLIP_1",
-            1:"#FLIP_2",
-            2:"#ROTATE_1",
-            3:"#ROTATE_2",
-            4:"#ROTATE_3",
-            5:"#ROTATE_1^#FLIP_1",
-            6:"#ROTATE_1^#FLIP_2",
+            0:"#hFlip",
+            1:"#vFlip",
+            2:"#RotateA",
+            3:"#RotateB",
+            4:"#RotateC",
+            5:"#DiagFlipA",
+            6:"#DiagFlipB",
         }
         selector_code = random.randint(0, len(list(rotate_code.keys()))-1)
         operated_canvas = []
@@ -603,13 +606,13 @@ class OperatorEngine(object):
                        operator_tag=None, allow_connect=True, 
                        allow_shape_break=False, selector_type="$OBJ"):
         rotate_code = {
-            0:"#FLIP_1",
-            1:"#FLIP_2",
-            2:"#ROTATE_1",
-            3:"#ROTATE_2",
-            4:"#ROTATE_3",
-            5:"#ROTATE_1^#FLIP_1",
-            6:"#ROTATE_1^#FLIP_2",
+            0:"#hFlip",
+            1:"#vFlip",
+            2:"#RotateA",
+            3:"#RotateB",
+            4:"#RotateC",
+            5:"#DiagFlipA",
+            6:"#DiagFlipB",
         }
         rotate_code_reverse = {}
         for k,v in rotate_code.items():
@@ -627,6 +630,9 @@ class OperatorEngine(object):
                     new_pos, new_obj_img_t = self._rotate_obj_position(old_obj.image_t, old_pos, selector_code)
                     if not allow_shape_break:
                         if new_pos[0] < 0 or new_pos[1] < 0:
+                            return -1, operator_tag
+                        if new_pos[0] + new_obj_img_t.shape[0] > new_canvas.init_canvas.shape[0] or \
+                            new_pos[1] + new_obj_img_t.shape[1] > new_canvas.init_canvas.shape[1]:
                             return -1, operator_tag
                     new_canvas.oid_map[_id].image_t = new_obj_img_t
                     new_canvas.opos_map[_id] = new_pos
