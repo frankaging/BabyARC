@@ -418,11 +418,55 @@ class ObjectEngine:
             new_obj = Object(img_t, position_tags=[])
 
             if random.random() <= 1-rainbow_prob:
-                objs_sampled.append(self.random_color(new_obj))
+                objs_sampled.append(self.random_color(new_obj, rainbow_prob=rainbow_prob))
             else:
                 objs_sampled.append(self.random_color_rainbow(new_obj))
         return objs_sampled
             
+    def sample_objs_with_l_shape(self, n=1, w_lims=[5,10], h_lims=[5,10], thickness=1, rainbow_prob=0.2, direction=0):
+        
+        objs_sampled = []
+        for i in range(n):
+            w = random.randint(w_lims[0], w_lims[1])
+            h = random.randint(h_lims[0], h_lims[1])
+
+            thickness = thickness
+
+            img_t = torch.zeros(h, w)
+
+            if direction == 0:
+                for t in range(0, thickness):
+                    for i in range(t, w-t):
+                        img_t[t, i] = 1
+                    for i in range(t, h-t):
+                        img_t[i, t] = 1
+            elif direction == 1:
+                for t in range(0, thickness):
+                    for i in range(t, w-t):
+                        img_t[t, i] = 1
+                    for i in range(t, h-t):
+                        img_t[i, -1-t] = 1
+            elif direction == 2:
+                for t in range(0, thickness):
+                    for i in range(t, w-t):
+                        img_t[-1-t, i] = 1
+                    for i in range(t, h-t):
+                        img_t[i, -1-t] = 1
+            elif direction == 3:
+                for t in range(0, thickness):
+                    for i in range(t, w-t):
+                        img_t[-1-t, i] = 1
+                    for i in range(t, h-t):
+                        img_t[i, t] = 1
+            # color
+            new_obj = Object(img_t, position_tags=[])
+
+            if random.random() <= 1-rainbow_prob:
+                objs_sampled.append(self.random_color(new_obj, rainbow_prob=rainbow_prob))
+            else:
+                objs_sampled.append(self.random_color_rainbow(new_obj))
+        return objs_sampled
+        
     def sample_objs_with_enclosure(self, n=1, w_lims=[5,10], h_lims=[5,10], thickness=1, rainbow_prob=0.2, 
                                    gravity=False, irrregular=False):
         
@@ -498,7 +542,7 @@ class ObjectEngine:
             new_obj = Object(img_t, position_tags=[])
 
             if random.random() <= 1-rainbow_prob:
-                objs_sampled.append(self.random_color(new_obj))
+                objs_sampled.append(self.random_color(new_obj, rainbow_prob=rainbow_prob))
             else:
                 objs_sampled.append(self.random_color_rainbow(new_obj))
         return objs_sampled
@@ -522,5 +566,5 @@ class ObjectEngine:
                 img_t = torch.ones(thickness,rand_len)
             # color
             new_obj = Object(img_t, position_tags=[])
-            objs_sampled.append(self.random_color(new_obj, rainbow_prob=0.0))
+            objs_sampled.append(self.random_color(new_obj, rainbow_prob=rainbow_prob))
         return objs_sampled

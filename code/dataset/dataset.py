@@ -108,7 +108,8 @@ class BabyARCDataset(object):
     
     def sample_single_canvas_by_core_edges(self, edges, is_plot=True, 
                                            min_length=20, max_length=30, 
-                                           allow_connect=False):
+                                           allow_connect=False,
+                                           rainbow_prob=0.2):
         relation_num = len(edges)
         nodes = OrderedDict({ })
 
@@ -177,7 +178,8 @@ class BabyARCDataset(object):
                             direction = "h"
                         obj_refer = self.ObE.sample_objs_with_line(n=1, len_lims=len_lims, 
                                                               thickness=thickness, 
-                                                              direction=direction)[0]
+                                                              direction=direction,
+                                                              rainbow_prob=rainbow_prob)[0]
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
                                                                  connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
@@ -194,7 +196,32 @@ class BabyARCDataset(object):
                         else:
                             h_lims = [5, test_canvas.init_canvas.shape[0]-1]    
                         obj_refer = self.ObE.sample_objs_with_rectangle(n=1, w_lims=w_lims, h_lims=h_lims, 
-                                                                         thickness=1, rainbow_prob=0.2)[0]
+                                                                         thickness=1, rainbow_prob=rainbow_prob)[0]
+                        placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
+                                                                 connect_allow=allow_connect) # place old obj with free pos
+                        if placement_result == -1:
+                            break
+                    elif node_right.startswith("Lshape"):
+                        lshape_spec = node_right.split("_")[-1]
+                        lshape_spec = ast.literal_eval(lshape_spec)
+                        if lshape_spec[0] != -1:
+                            w_lims = [lshape_spec[0], lshape_spec[0]]
+                        else:
+                            w_lims = [5, test_canvas.init_canvas.shape[1]-1]
+                        if lshape_spec[1] != -1:
+                            h_lims = [lshape_spec[1], lshape_spec[1]]
+                        else:
+                            h_lims = [5, test_canvas.init_canvas.shape[0]-1]   
+                        if lshape_spec[2] == -1:
+                            directions=[0, 1, 2, 3]
+                            direction = random.sample(directions, k=1)[0]
+                        elif lshape_spec[2] == 0 or lshape_spec[2] == 1 or lshape_spec[2] == 2 or lshape_spec[2] == 3:
+                            direction = lshape_spec[2]
+                        else:
+                            raise NotImplementedError("Invalid direction for Lshape")
+                        obj_refer = self.ObE.sample_objs_with_l_shape(n=1, w_lims=w_lims, h_lims=h_lims, 
+                                                                      thickness=1, rainbow_prob=rainbow_prob, 
+                                                                      direction=direction)[0]
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
                                                                  connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
@@ -218,7 +245,7 @@ class BabyARCDataset(object):
                         else: 
                             gravity = True
                         obj_refer = self.ObE.sample_objs_with_enclosure(n=1, w_lims=w_lims, h_lims=h_lims, 
-                                                                   thickness=1, rainbow_prob=0.1, 
+                                                                   thickness=1, rainbow_prob=rainbow_prob, 
                                                                    gravity=gravity)[0]
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False) # place old obj with free pos
                         if placement_result == -1:
