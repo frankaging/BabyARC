@@ -306,6 +306,19 @@ class ObjectEngine:
             return self.random_color_rainbow(img_obj, color="random")
         return ret
     
+    def _random_color(self, img_t, color="random"):
+        ret = copy.deepcopy(img_t)
+        color_list = ret.unique().tolist()
+        for c in color_list:
+            if c != self.background_c:
+                if color == "random":
+                    new_c = randint_exclude(0,9,[c, self.background_c])
+                    ret[img_t==c] = new_c
+                else:
+                    # fixed color
+                    pass
+        return ret
+    
     def random_color_rainbow(self, img_obj, color="random"):
         ret = copy.deepcopy(img_obj)
         color_list = ret.image_t.unique().tolist()
@@ -313,6 +326,15 @@ class ObjectEngine:
             for j in range(ret.image_t.shape[1]):
                 if ret.image_t[i,j] != self.background_c:
                     ret.image_t[i,j] = randint_exclude(0,9,[self.background_c])
+        return ret
+    
+    def _random_color_rainbow(self, img_t):
+        ret = copy.deepcopy(img_t)
+        color_list = ret.unique().tolist()
+        for i in range(ret.shape[0]):
+            for j in range(ret.shape[1]):
+                if ret[i,j] != self.background_c:
+                    ret[i,j] = randint_exclude(0,9,[self.background_c])
         return ret
     
     def fix_color(self, img_obj, new_color):
@@ -395,8 +417,28 @@ class ObjectEngine:
             else:
                 pass
         return ret
+
+    def sample_objs_with_rectangle_solid(self, n=1, w_lims=[5,10], h_lims=[5,10],
+                                         rainbow_prob=0.2):
+        
+        objs_sampled = []
+        for i in range(n):
+            w = random.randint(w_lims[0], w_lims[1])
+            h = random.randint(h_lims[0], h_lims[1])
+
+            img_t = torch.ones(h, w)
+
+            # color
+            new_obj = Object(img_t, position_tags=[])
+
+            if random.random() <= 1-rainbow_prob:
+                objs_sampled.append(self.random_color(new_obj, rainbow_prob=rainbow_prob))
+            else:
+                objs_sampled.append(self.random_color_rainbow(new_obj))
+        return objs_sampled
     
-    def sample_objs_with_rectangle(self, n=1, w_lims=[5,10], h_lims=[5,10], thickness=1, rainbow_prob=0.2):
+    def sample_objs_with_rectangle(self, n=1, w_lims=[5,10], h_lims=[5,10], thickness=1, 
+                                   rainbow_prob=0.2):
         
         objs_sampled = []
         for i in range(n):
@@ -567,4 +609,61 @@ class ObjectEngine:
             # color
             new_obj = Object(img_t, position_tags=[])
             objs_sampled.append(self.random_color(new_obj, rainbow_prob=rainbow_prob))
+        return objs_sampled
+    
+    def sample_objs_with_symmetry_shape(self, n=1, w_lims=[5,10], h_lims=[5,10], 
+                                        rainbow_prob=0.2, axis_list=[0,1], axis_maintain=False, 
+                                        solid_prob=0.5):
+        # can have 4 symmetry axis [0 (-), 1(|), 2(\), 3(/)]
+        objs_sampled = []
+        for i in range(n):
+            # based on the axis, we calculate the lims
+            if 2 in axis_list or 3 in axis_list:
+                _lim_1 = min(w_lims[0], h_lims[0])
+                _lim_2 = min(w_lims[1], h_lims[1])
+                s = random.randint(_lim_1, _lim_2)
+                w = s
+                h = s # make it a square
+            else: 
+                w = random.randint(w_lims[0], w_lims[1])
+                h = random.randint(h_lims[0], h_lims[1])
+
+            seed_img_t = (torch.rand(size=(h,w)) <= solid_prob).int()
+            while len(seed_img_t.unique()) == 1 and seed_img_t[0] == 0:
+                seed_img_t = (torch.rand(size=(h,w)) <= solid_prob).int() # reject sampling
+
+            if random.random() <= 1-rainbow_prob:
+                seed_img_t = self._random_color(seed_img_t)
+            else:
+                seed_img_t = self._random_color_rainbow(seed_img_t)
+
+            for axis in axis_list:
+                if axis == 0:
+                    sym_img_t = seed_img_t.flip(-2)
+                    start_r = int(math.ceil(h/2))
+                    for i in range(start_r, h):
+                        for j in range(0, w):
+                            seed_img_t[i,j] = sym_img_t[i,j]
+                elif axis == 1:
+                    sym_img_t = seed_img_t.flip(-1)
+                    start_c = int(math.ceil(w/2))
+                    for i in range(0, h):
+                        for j in range(start_c, w):
+                            seed_img_t[i,j] = sym_img_t[i,j]
+                elif axis == 2:
+                    assert seed_img_t.shape[0] == seed_img_t.shape[1]
+                    sym_img_t = torch.rot90(seed_img_t, k=1, dims=(-2, -1)).flip(-2)
+                    for i in range(1, h):
+                        for j in range(0, i):
+                            seed_img_t[i,j] = sym_img_t[i,j]
+                elif axis == 3:
+                    assert seed_img_t.shape[0] == seed_img_t.shape[1]
+                    sym_img_t = torch.rot90(seed_img_t, k=1, dims=(-2, -1)).flip(-1)
+                    for i in range(1, h):
+                        for j in range(w-i, w):
+                            seed_img_t[i,j] = sym_img_t[i,j]
+
+            new_obj = Object(seed_img_t, position_tags=[])
+            objs_sampled.append(new_obj)
+        
         return objs_sampled

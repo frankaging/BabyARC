@@ -226,6 +226,26 @@ class BabyARCDataset(object):
                                                                  connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
                             break
+                    elif node_right.startswith("symmetry"):
+                        rect_spec = node_right.split("_")[1]
+                        rect_spec = ast.literal_eval(rect_spec)
+                        if rect_spec[0] != -1:
+                            w_lims = [rect_spec[0], rect_spec[0]]
+                        else:
+                            w_lims = [5, test_canvas.init_canvas.shape[1]-1]
+                        if rect_spec[1] != -1:
+                            h_lims = [rect_spec[1], rect_spec[1]]
+                        else:
+                            h_lims = [5, test_canvas.init_canvas.shape[0]-1]
+                        axis_spec = node_right.split("_")[-1]
+                        axis_spec = ast.literal_eval(axis_spec)
+                        obj_refer = self.ObE.sample_objs_with_symmetry_shape(
+                            n=1, w_lims=w_lims, h_lims=h_lims,
+                            rainbow_prob=rainbow_prob, axis_list=axis_spec)[0]
+                        placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
+                                                                 connect_allow=allow_connect) # place old obj with free pos
+                        if placement_result == -1:
+                            break
                     elif node_right.startswith("enclosure"):
                         rect_spec = node_right.split("_")[-1]
                         rect_spec = ast.literal_eval(rect_spec)

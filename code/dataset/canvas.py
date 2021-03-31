@@ -117,8 +117,8 @@ class Canvas:
         # connect_allow and (to_render_img[i,j].tolist() in self._get_obj_color(to_placement_obj) 
         for i in range(canvas_r):
             for j in range(canvas_c):
-                if to_placement_mask[i,j] == 1 and \
-                    to_render_img[i,j].tolist() != self.background_color:
+                if to_placement_mask[i,j] != 0 and \
+                    to_render_img[i,j] != self.background_color:
                     return False
         
         return True
@@ -509,7 +509,8 @@ class Canvas:
             image_t = obj.image_t
             for i in range(r, r+image_t.shape[0]):
                 for j in range(c, c+image_t.shape[1]):
-                    ret_canvas[i,j] = image_t[i-r,j-c]
+                    if ret_canvas[i,j] == self.background_color: # if it already has color, don't overwrite
+                        ret_canvas[i,j] = image_t[i-r,j-c]
         return ret_canvas
     
     def check_conflict(self, obj_mask=None, is_plot=True, connect_allow=False):
