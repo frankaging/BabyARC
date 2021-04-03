@@ -619,3 +619,16 @@ class BabyARCDataset(object):
     def sample_single_task_canvas(self, retry=5, is_plot=True):
         edges = self.sample_single_core_edges()
         print(self.sample_single_canvas_by_core_edges(edges, retry=retry, is_plot=is_plot))
+        
+    def sample_task_canvas_from_arc(self, image_t, is_diag=True, color=True, is_plot=True, allow_modify=False, background_color=0):
+        if not color:
+            objs = find_connected_components(image_t, is_diag=is_diag)
+        else:
+            objs = find_connected_components_colordiff(image_t, is_diag=is_diag, color=color)
+        # generate canvas
+        test_canvas = CanvasEngine().sample_task_canvas_from_arc(image_t, objs)
+        if is_plot:
+            test_canvas.render()
+
+        return test_canvas.repr_as_dict()
+        

@@ -1,5 +1,11 @@
 import torch
 import matplotlib.pylab as plt
+import scipy as sp
+from torch.autograd import Variable
+from numbers import Number
+import scipy.ndimage
+import numpy as np
+
 # Baby-ARC related imports
 try:
     from .constants import *
@@ -7,6 +13,130 @@ try:
 except:
     from constants import *
     from objects import *
+
+
+def to_np_array(*arrays, **kwargs):
+    array_list = []
+    for array in arrays:
+        if isinstance(array, Variable):
+            if array.is_cuda:
+                array = array.cpu()
+            array = array.data
+        if isinstance(array, torch.Tensor) or isinstance(array, torch.FloatTensor) or isinstance(array, torch.LongTensor) or isinstance(array, torch.ByteTensor) or \
+           isinstance(array, torch.cuda.FloatTensor) or isinstance(array, torch.cuda.LongTensor) or isinstance(array, torch.cuda.ByteTensor):
+            if array.is_cuda:
+                array = array.cpu()
+            array = array.numpy()
+        if isinstance(array, Number):
+            pass
+        elif isinstance(array, list) or isinstance(array, tuple):
+            array = np.array(array)
+        elif array.shape == (1,):
+            if "full_reduce" in kwargs and kwargs["full_reduce"] is False:
+                pass
+            else:
+                array = array[0]
+        elif array.shape == ():
+            array = array.tolist()
+        array_list.append(array)
+    if len(array_list) == 1:
+        array_list = array_list[0]
+    return array_list
+    
+def get_obj_from_mask(input, obj_mask=None):
+    """Get the object from the mask."""
+    if obj_mask is None:
+        return input
+    assert input.shape[-2:] == obj_mask.shape
+    if isinstance(input, np.ndarray):
+        input = torch.FloatTensor(input)
+    if isinstance(obj_mask, np.ndarray):
+        obj_mask = torch.BoolTensor(obj_mask.astype(bool))
+    shape = input.shape
+    if len(shape) == 3:
+        output = torch.zeros_like(input).reshape(input.shape[0], -1)
+        idx = obj_mask.flatten().bool()
+        output[:, idx] = input.reshape(input.shape[0], -1)[:, idx]
+    else:
+        output = torch.zeros_like(input).flatten()
+        idx = obj_mask.flatten().bool()
+        output[idx] = input.flatten()[idx]
+    return output.reshape(shape)
+
+def shrink(input):
+    """ Find the smallest region of your matrix that contains all the nonzero elements """
+    if not isinstance(input, torch.Tensor):
+        input = torch.FloatTensor(input)
+        is_numpy = True
+    else:
+        is_numpy = False
+    if input.abs().sum() == 0:
+        return input, (0, 0, input.shape[-2], input.shape[-1])
+    if len(input.shape) == 3:
+        input_core = input.mean(0)
+    else:
+        input_core = input
+    rows = torch.any(input_core.bool(), axis=-1)
+    cols = torch.any(input_core.bool(), axis=-2)
+    ymin, ymax = torch.where(rows)[0][[0, -1]]
+    xmin, xmax = torch.where(cols)[0][[0, -1]]
+    shrinked = input[..., ymin:ymax+1, xmin:xmax+1]
+    pos = (ymin.item(), xmin.item(), shrinked.shape[-2], shrinked.shape[-1])
+    if is_numpy:
+        shrinked = to_np_array(shrinked)
+    return shrinked, pos
+
+def find_connected_components(input, is_diag=True, is_mask=False):
+    """Find all the connected components, regardless of color."""
+    input = to_np_array(input)
+    shape = input.shape
+    if is_diag:
+        structure = [[1,1,1], [1,1,1], [1,1,1]]
+    else:
+        structure = [[0,1,0], [1,1,1], [0,1,0]]
+    if len(shape) == 3:
+        input_core = input.mean(0)
+    else:
+        input_core = input
+    labeled, ncomponents = sp.ndimage.measurements.label(input_core, structure)
+
+    objects = []
+    for i in range(1, ncomponents + 1):
+        obj_mask = (labeled == i).astype(int)
+        obj = shrink(get_obj_from_mask(input, obj_mask))
+        if is_mask:
+            objects.append(obj + (obj_mask,))
+        else:
+            objects.append(obj)
+    return objects
+
+def find_connected_components_colordiff(input, is_diag=True, color=True):
+    """Find all the connected components, considering color."""
+    input = to_np_array(input)
+    shape = input.shape
+
+    if len(shape) == 3:
+        assert shape[0] == 3
+        color_list = np.unique(input.reshape(shape[0], -1), axis=-1).T
+        bg_color = np.zeros(shape[0])
+    else:
+        input_core = input
+        color_list = np.unique(input)
+        bg_color = 0
+
+    objects = []
+    for c in color_list:
+        if not (c == bg_color).all():
+            if len(shape) == 3:
+                mask = np.array(input!=c[:,None,None]).any(0, keepdims=True).repeat(shape[0], axis=0)
+            else:
+                mask = np.array(input!=c, dtype=int)
+            color_mask = np.ma.masked_array(input, mask)
+            color_mask = color_mask.filled(fill_value=0)
+            objs = find_connected_components(color_mask, is_diag=is_diag)
+            objects += objs
+    return objects
+
     
 # general util functions like plots, helpers to manipulate matrics
 def remove_duplicates(seq):

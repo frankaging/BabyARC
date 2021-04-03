@@ -37,8 +37,29 @@ class Canvas:
     like object numbers, object shapes, etc.. It can manage
     object relations.
     """
-    def __init__(self, init_canvas=None, repre_dict=None):
-        if repre_dict == None:
+    def __init__(self, init_canvas=None, repre_dict=None, arc_image_t=None, arc_parsed_objs=None):
+        if arc_parsed_objs is not None:
+            # we need to preload from parsed obj list
+            self.init_canvas = torch.zeros(arc_image_t.shape[0], 
+                                           arc_image_t.shape[1])
+            self.oid_map = OrderedDict()
+            self.opos_map = OrderedDict() # upper left corner position
+            self.node_id_map = OrderedDict()
+            self.id_node_map = OrderedDict()
+            self.background_color = 0
+            obj_idx = 0
+            for obj in arc_parsed_objs:
+                obj_image_t = obj[0]
+                obj_pos = obj[1]
+                self.oid_map[obj_idx] = Object(obj_image_t, position_tags=[])
+                self.opos_map[obj_idx] = torch.tensor([obj_pos[0], obj_pos[1]])
+                self.node_id_map[f"obj_{obj_idx}"] = obj_idx
+                self.id_node_map[obj_idx] = f"obj_{obj_idx}"
+                obj_idx += 1
+            # extra fields we might need
+            self.partial_relation_edges = self.parse_relations()
+            self.image_t = arc_image_t
+        elif repre_dict == None:
             self.init_canvas = init_canvas
             self.oid_map = OrderedDict()
             self.opos_map = OrderedDict() # upper left corner position
@@ -900,3 +921,6 @@ class CanvasEngine:
             canvas_list.append(Canvas(canvas.clone()))
             
         return canvas_list
+    
+    def sample_task_canvas_from_arc(self, image_t, parsed_objs):
+        return Canvas(arc_image_t=image_t, arc_parsed_objs=parsed_objs)
