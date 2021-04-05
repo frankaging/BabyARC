@@ -85,6 +85,11 @@ class Canvas:
                           9: [.64, .16, .16],
                          }   
     
+    def reconsile(self):
+        updated_canvas, r_diff, c_diff = self.render(is_plot=False, minimum_cover=False)
+        self.image_t = updated_canvas
+        self.partial_relation_edges = self.parse_relations()
+    
     def _load_as_dict(self, repre_dict_in):
         """
         loading a canvas from a dictionary file

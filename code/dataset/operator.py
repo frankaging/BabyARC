@@ -577,11 +577,63 @@ class OperatorEngine(object):
                 selectors.append(selector)
         return selectors
 
+    def _identity_obj(self, obj):
+        """
+        Dummy identity operator
+        """
+        return copy.deepcopy(obj)
+    
+    def _identity_obj_position(self, canvas_t_in, obj_t_in, old_pos_in):
+        """
+        Dummy identity position operator
+        """
+        return old_pos_in
+        
     ########################################
     #
     # Operators
     #
     ########################################
+    
+    def operator_identity(self, canvas_list, selectors=[], selector_type="$OBJ", inplace=True):
+        """
+        Identity oeprator. In place means operate on object in place.
+        """
+        canvas_idx = 0
+        if inplace:
+            operated_canvas = []
+            for canvas in canvas_list:
+                new_canvas = copy.deepcopy(canvas)
+                for oid, obj in new_canvas.oid_map.items():
+                    _obj = canvas.id_node_map[oid]
+                    if _obj in selectors[canvas_idx]:
+                        identity_obj = self._identity_obj(obj)
+                        new_canvas.oid_map[oid] = identity_obj
+                        new_pos = \
+                            self._identity_obj_position(canvas.init_canvas, obj.image_t, canvas.opos_map[oid])
+                        new_canvas.opos_map[oid] = new_pos
+                operated_canvas.append(new_canvas)
+                canvas_idx += 1
+        else:
+            operated_canvas = []
+            for canvas in canvas_list:
+                new_canvas = Canvas(init_canvas=torch.zeros_like(canvas.init_canvas))
+                for oid, obj in canvas.oid_map.items():
+                    _obj = canvas.id_node_map[oid]
+                    if _obj in selectors[canvas_idx]:
+                        identity_obj = self._identity_obj(obj)
+                        new_pos = \
+                            self._identity_obj_position(canvas.init_canvas, obj.image_t, canvas.opos_map[oid])
+                        # filling in the empty canvas
+                        new_canvas.oid_map[oid] = identity_obj
+                        new_canvas.opos_map[oid] = new_pos
+                        new_canvas.node_id_map[_obj] = oid
+                        new_canvas.id_node_map[oid] = _obj
+                new_canvas.reconsile()
+                operated_canvas.append(new_canvas)
+                canvas_idx += 1
+        return operated_canvas, selector_type
+    
     def operator_rotate_whole(self, canvas_list, selectors=[], selector_type="$WHOLE"):
         """
         Rotate whole canvas, selector is not needed!
