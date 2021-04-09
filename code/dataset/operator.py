@@ -743,7 +743,7 @@ class OperatorEngine(object):
             if hit_type == None:
                 if direction == 0:
                     # random generate, but search to have a good answer if possible
-                    distance_pool = [i for i in range(max(old_pos[1],1))]
+                    distance_pool = [i for i in range(1, max(old_pos[1],1))]
                     random.shuffle(distance_pool)
                     for distance in distance_pool:
                         new_pos[1] = old_pos[1] - distance
@@ -752,7 +752,7 @@ class OperatorEngine(object):
                             # we find a valid answer
                             break
                 elif direction == 1:
-                    distance_pool = [i for i in range(max(old_pos[0],1))]
+                    distance_pool = [i for i in range(1, max(old_pos[0],1))]
                     random.shuffle(distance_pool)
                     for distance in distance_pool:
                         new_pos[0] = old_pos[0] - distance
@@ -760,7 +760,7 @@ class OperatorEngine(object):
                         if actionable_canvas.check_conflict(connect_allow=True):
                             break
                 elif direction == 2:
-                    distance_pool = [i for i in range(max(canvas_c-(old_pos[1]+obj_c),1))]
+                    distance_pool = [i for i in range(1, max(canvas_c-(old_pos[1]+obj_c),1))]
                     random.shuffle(distance_pool)
                     for distance in distance_pool:
                         new_pos[1] = old_pos[1] + distance
@@ -768,7 +768,7 @@ class OperatorEngine(object):
                         if actionable_canvas.check_conflict(connect_allow=True):
                             break
                 elif direction == 3:
-                    distance_pool = [i for i in range(max(canvas_r-(old_pos[0]+obj_r),1))]
+                    distance_pool = [i for i in range(1, max(canvas_r-(old_pos[0]+obj_r),1))]
                     random.shuffle(distance_pool)
                     for distance in distance_pool:
                         new_pos[0] = old_pos[0] + distance
@@ -817,7 +817,7 @@ class OperatorEngine(object):
     
     def operator_move(self, canvas_list, selectors=None, obj_move_specs=None, 
                       allow_overlap=False, allow_shape_break=False,
-                      allow_connect=False,
+                      allow_connect=False, allow_stay=False,
                       operator_tag="#DEFINED_BY_SPEC"):
         """
         
@@ -861,6 +861,10 @@ class OperatorEngine(object):
                     new_pos = self._move_obj_with_spec(old_pos, _id, new_obj_img_t, new_canvas, 
                                                        move_spec.direction, move_spec.distance, 
                                                        move_spec.hit_type)
+                    # we enforce it to move or not?
+                    if not allow_stay:
+                        if old_pos[0] == new_pos[0] and old_pos[1] == new_pos[1]:
+                            return -1, operator_tag
                     if not allow_shape_break:
                         if new_pos[0] < 0 or new_pos[1] < 0:
                             return -1, operator_tag
