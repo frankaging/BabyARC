@@ -731,17 +731,51 @@ class OperatorEngine(object):
     
     def _move_obj_with_spec(self, old_pos, obj_id, obj_img_t, canvas, direction=0, distance=1, hit_type=None):
         new_pos = copy.deepcopy(old_pos)
-        
         actionable_canvas = copy.deepcopy(canvas)
+
         assert direction in {0,1,2,3}
 
         if distance < 0 :
-            assert hit_type != None
             canvas_r = canvas.init_canvas.shape[0]
             canvas_c = canvas.init_canvas.shape[1]
             obj_r = obj_img_t.shape[0]
             obj_c = obj_img_t.shape[1]
-            if hit_type == "wall":
+            if hit_type == None:
+                if direction == 0:
+                    # random generate, but search to have a good answer if possible
+                    distance_pool = [i for i in range(max(old_pos[1],1))]
+                    random.shuffle(distance_pool)
+                    for distance in distance_pool:
+                        new_pos[1] = old_pos[1] - distance
+                        actionable_canvas.opos_map[obj_id] = new_pos
+                        if actionable_canvas.check_conflict(connect_allow=True):
+                            # we find a valid answer
+                            break
+                elif direction == 1:
+                    distance_pool = [i for i in range(max(old_pos[0],1))]
+                    random.shuffle(distance_pool)
+                    for distance in distance_pool:
+                        new_pos[0] = old_pos[0] - distance
+                        actionable_canvas.opos_map[obj_id] = new_pos
+                        if actionable_canvas.check_conflict(connect_allow=True):
+                            break
+                elif direction == 2:
+                    distance_pool = [i for i in range(max(canvas_c-(old_pos[1]+obj_c),1))]
+                    random.shuffle(distance_pool)
+                    for distance in distance_pool:
+                        new_pos[1] = old_pos[1] + distance
+                        actionable_canvas.opos_map[obj_id] = new_pos
+                        if actionable_canvas.check_conflict(connect_allow=True):
+                            break
+                elif direction == 3:
+                    distance_pool = [i for i in range(max(canvas_r-(old_pos[0]+obj_r),1))]
+                    random.shuffle(distance_pool)
+                    for distance in distance_pool:
+                        new_pos[0] = old_pos[0] + distance
+                        actionable_canvas.opos_map[obj_id] = new_pos
+                        if actionable_canvas.check_conflict(connect_allow=True):
+                            break
+            elif hit_type == "wall":
                 if direction == 0:
                     new_pos[1] = 0
                 elif direction == 1:
