@@ -654,6 +654,7 @@ class OperatorEngine(object):
             operated_canvas.append(new_canvas)
         return operated_canvas, rotate_code[selector_code]
     
+    # PR: change the name to operator_*
     def operate_rotate(self, canvas_list, selectors=[],
                        operator_tag=None, allow_connect=True, 
                        allow_shape_break=False, selector_type="$OBJ"):
@@ -727,7 +728,128 @@ class OperatorEngine(object):
                 return operated_canvas, rotate_code[selector_code]
             else:
                 -1, rotate_code[selector_code] # Fail to operate!
+    
+    def _move_obj_with_spec(self, old_pos, obj_id, obj_img_t, canvas, direction=0, distance=1, hit_type=None):
+        new_pos = copy.deepcopy(old_pos)
+        
+        actionable_canvas = copy.deepcopy(canvas)
+        assert direction in {0,1,2,3}
+
+        if distance < 0 :
+            assert hit_type != None
+            canvas_r = canvas.init_canvas.shape[0]
+            canvas_c = canvas.init_canvas.shape[1]
+            obj_r = obj_img_t.shape[0]
+            obj_c = obj_img_t.shape[1]
+            if hit_type == "wall":
+                if direction == 0:
+                    new_pos[1] = 0
+                elif direction == 1:
+                    new_pos[0] = 0
+                elif direction == 2:
+                    new_pos[1] = canvas_c - obj_c
+                elif direction == 3:
+                    new_pos[0] = canvas_r - obj_r
+            elif hit_type == "agent":
+                # the way is reject sampling
+                if direction == 0:
+                    for offset in range(0, old_pos[1]+1):
+                        new_r = old_pos[0]
+                        new_c = old_pos[1] - offset
+                        new_pos[0] = new_r
+                        new_pos[1] = new_c
+                        actionable_canvas.opos_map[obj_id] = new_pos
+                        if not actionable_canvas.check_conflict(connect_allow=False):
+                            # we find a conflict
+                            break
+                    return new_pos
+                elif direction == 1:
+                    new_pos[0] = 0
+                elif direction == 2:
+                    new_pos[1] = canvas_c - obj_c
+                elif direction == 3:
+                    new_pos[0] = canvas_r - obj_r
+        else:
+            if direction == 0:
+                new_pos[1] = old_pos[1] - distance
+            elif direction == 1:
+                new_pos[0] = old_pos[0] - distance
+            elif direction == 2:
+                new_pos[1] = old_pos[1] + distance
+            elif direction == 3:
+                new_pos[0] = old_pos[0] + distance
+
+        return new_pos
+    
+    def operator_move(self, canvas_list, selectors=None, obj_move_specs=None, 
+                      allow_overlap=False, allow_shape_break=False,
+                      allow_connect=False,
+                      operator_tag="#DEFINED_BY_SPEC"):
+        """
+        
+        move_spec
+        
+        obj_move_spec contains direction + distance as [[[1 (direction), 3 (distance), ], ...], [], ...]
+        
+        0: <-; 1 ^; 2->; 3 v
+        
+        Move intended to have the following options
+        1. #FIXED_POSITION: move to position is given, at random.
+        2. All others are internal, and return by the function.
+        Single object move or more than two:
+        #RANDOM_DIRECTION_TILL_BOUND (0)
+        #RANDOM_DIRECTION_TILL_HIT (1)
+        
+        Pair objects move:
+        #RANDOM_CROSS_DIRECTION_TILL_HIT (2)
+        #RANDOM_IN_PLACE_SWAP (3)
+        """
+        operated_canvas = []
+        assert obj_move_specs != None
+        canvas_idx = 0
+        for canvas in canvas_list:
+            new_canvas = copy.deepcopy(canvas)
+            obj_move_spec = obj_move_specs[canvas_idx]
+            sel_obj_idx = 0
             
-    def operate_draw(self, canvas_list, obj_selectors=None, color_selectors=None, position_selectors=None, 
-                     numeric_selectors=None, selector_type="$OBJ&$COLOR"):
-        pass
+            if len(selectors[canvas_idx]) == 2 and len(obj_move_spec) == 1 and obj_move_spec[0].linkage_move:
+                # this is linkage move, we can move two obj together
+                # with certain physical associations
+                pass
+            else:
+                assert len(selectors[canvas_idx]) == len(obj_move_spec)
+                # this is for moving a single object
+                for selected_obj in selectors[canvas_idx]:
+                    move_spec = obj_move_spec[sel_obj_idx]
+                    _id = canvas.node_id_map[selected_obj]
+                    old_pos = canvas.opos_map[_id]
+                    new_obj_img_t = canvas.oid_map[_id].image_t
+                    new_pos = self._move_obj_with_spec(old_pos, _id, new_obj_img_t, new_canvas, 
+                                                       move_spec.direction, move_spec.distance, 
+                                                       move_spec.hit_type)
+                    if not allow_shape_break:
+                        if new_pos[0] < 0 or new_pos[1] < 0:
+                            return -1, operator_tag
+                        if new_pos[0] + new_obj_img_t.shape[0] > new_canvas.init_canvas.shape[0] or \
+                            new_pos[1] + new_obj_img_t.shape[1] > new_canvas.init_canvas.shape[1]:
+                            return -1, operator_tag
+                    else:
+                        # if the obj is moving out
+                        # do we need to handling this???
+                        pass
+                    new_canvas.opos_map[_id] = new_pos
+                    # check the canvas compliant
+                    if not allow_overlap:
+                        if new_canvas.check_conflict(connect_allow=allow_connect): # this is little hard, but ok?
+                            operated_canvas.append(new_canvas)
+                        else:
+                            break
+                    else:
+                        operated_canvas.append(new_canvas)
+                    sel_obj_idx += 1
+                    
+        # return type
+        if len(operated_canvas) == len(canvas_list):
+            return operated_canvas, operator_tag
+
+        return -1, operator_tag

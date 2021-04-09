@@ -35,6 +35,10 @@ except:
 from itertools import product
 import re
 
+from collections import namedtuple
+# These specs are for complicated operators
+OperatorMoveSpec = namedtuple("OperatorMoveSpec", "autonomous direction distance hit_type linkage_move linkage_move_distance_ratio")
+
 class BabyARCDataset(object):
     """
     The main class of the BabyARC Dataset。
