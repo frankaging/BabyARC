@@ -176,7 +176,9 @@ class ObjectEngine:
         logger.info(f"Iso obj count = {len(shrink_obj_pool)}")
         return shrink_obj_pool
     
-    def sample_objs_by_bound_area(self, n=1, w_lim=5, h_lim=5, random_generated=True, rainbow_prob=0.2):
+    def sample_objs_by_bound_area(self, n=1, w_lim=5, h_lim=5, random_generated=True, 
+                                  rainbow_prob=0.2, 
+                                  concept_collection=["line", "Lshape", "rectangle", "rectangleSolid"]):
         """
         sample object within the width and height limits.
         if there is no such object in the pool, the engine
@@ -184,39 +186,74 @@ class ObjectEngine:
         """
         objs_sampled = []
         for i in range(n):
-            for obj in self.obj_pool:
-                obj_img_t = obj.image_t
-                if obj_img_t.shape[0] <= h_lim and \
-                    obj_img_t.shape[1] <= w_lim and \
-                    obj_img_t.shape[0] >= 2 and \
-                    obj_img_t.shape[1] >= 2:
-                    objs_sampled.append(self.random_color(obj))
-            if len(objs_sampled) == 0:
-                break
-        if len(objs_sampled) >= 1 and random.random() >= 0.5:
-            return [random.choice(objs_sampled)]
+            chosen_shape = np.random.choice(concept_collection)
+            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid"}:
+                if chosen_shape == "line":
+                    direction = random.randint(0,1)
+                    if direction == 0:
+                        len_lims=[2,h_lim]
+                    else:
+                        len_lims=[2,w_lim]
+                    obj = self.sample_objs_with_line(
+                        n=1, len_lims=len_lims, 
+                        thickness=1, 
+                        direction=["v", "h"][direction],
+                        rainbow_prob=rainbow_prob
+                    )[0]
+                elif chosen_shape == "Lshape":
+                    direction=random.randint(0,3)
+                    obj = self.sample_objs_with_l_shape(
+                        n=1, w_lims=[2,w_lim], h_lims=[2,h_lim], thickness=1, 
+                        rainbow_prob=rainbow_prob, direction=direction
+                    )[0]
+                elif chosen_shape == "rectangle":
+                    obj = self.sample_objs_with_rectangle(
+                        n=1, w_lims=[2,w_lim], h_lims=[2,h_lim], 
+                        thickness=1, rainbow_prob=rainbow_prob
+                    )[0]
+                elif chosen_shape == "rectangleSolid":
+                    obj = self.sample_objs_with_rectangle_solid(
+                        n=1, w_lims=[2,w_lim], h_lims=[2,h_lim], 
+                        rainbow_prob=rainbow_prob
+                    )[0]
+                objs_sampled.append(obj)
+            else:
+                for i in range(n):
+                    for obj in self.obj_pool:
+                        obj_img_t = obj.image_t
+                        if obj_img_t.shape[0] <= h_lim and \
+                            obj_img_t.shape[1] <= w_lim and \
+                            obj_img_t.shape[0] >= 2 and \
+                            obj_img_t.shape[1] >= 2:
+                            objs_sampled.append(self.random_color(obj))
+                    if len(objs_sampled) == 0:
+                        break
+                if len(objs_sampled) >= 1 and random.random() >= 0.5:
+                    return [random.choice(objs_sampled)]
 
-        objs_sampled = []
-        random_delete = True if random.random() >= 0.5 else False
-        if len(objs_sampled) == 0 and random_generated == True:
-            for i in range(n):
-                w = random.randint(2, w_lim)
-                h = random.randint(2, h_lim)
-                
-                img_t = torch.ones(h, w)
+                objs_sampled = []
+                random_delete = True if random.random() >= 0.5 else False
+                if len(objs_sampled) == 0 and random_generated == True:
+                    for i in range(n):
+                        w = random.randint(2, w_lim)
+                        h = random.randint(2, h_lim)
 
-                if random_delete:
-                    img_t[random.randint(0, h-1), random.randint(0, w-1)] = self.background_c
+                        img_t = torch.ones(h, w)
 
-                new_obj = Object(img_t, position_tags=[])
-                if random.random() <= 1-rainbow_prob:
-                    objs_sampled.append(self.random_color(new_obj))
-                else:
-                    objs_sampled.append(self.random_color_rainbow(new_obj))
+                        if random_delete:
+                            img_t[random.randint(0, h-1), random.randint(0, w-1)] = self.background_c
+
+                        new_obj = Object(img_t, position_tags=[])
+                        if random.random() <= 1-rainbow_prob:
+                            objs_sampled.append(self.random_color(new_obj))
+                        else:
+                            objs_sampled.append(self.random_color_rainbow(new_obj))
 
         return objs_sampled
 
-    def sample_objs_by_fixed_width(self, n=1, width=5, h_lim=5, random_generated=True, rainbow_prob=0.2):
+    def sample_objs_by_fixed_width(self, n=1, width=5, h_lim=5, 
+                                   random_generated=True, rainbow_prob=0.2, 
+                                   concept_collection=["line", "Lshape", "rectangle", "rectangleSolid"]):
         """
         sample object within the width and height limits.
         if there is no such object in the pool, the engine
@@ -224,36 +261,69 @@ class ObjectEngine:
         """
         objs_sampled = []
         for i in range(n):
-            for obj in self.obj_pool:
-                obj_img_t = obj.image_t
-                if obj_img_t.shape[1] == width and obj_img_t.shape[0] <= h_lim:
-                    objs_sampled.append(self.random_color(obj))
-            if len(objs_sampled) == 0:
-                break
-        if len(objs_sampled) >= 1 and random.random() >= 0.5:
-            return [random.choice(objs_sampled)]
-        
-        objs_sampled = []
-        random_delete = True if random.random() >= 0.5 else False
-        if len(objs_sampled) == 0 and random_generated == True:
-            for i in range(n):
-                w = width
-                h = random.randint(2, h_lim)
+            chosen_shape = np.random.choice(concept_collection)
+            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid"}:
+                if chosen_shape == "line":
+                    direction = 1
+                    len_lims=[width,width]
+                    obj = self.sample_objs_with_line(
+                        n=1, len_lims=len_lims, 
+                        thickness=1, 
+                        direction=["v", "h"][direction],
+                        rainbow_prob=rainbow_prob
+                    )[0]
+                elif chosen_shape == "Lshape":
+                    direction=random.randint(0,3)
+                    obj = self.sample_objs_with_l_shape(
+                        n=1, w_lims=[width,width], h_lims=[2,h_lim], thickness=1, 
+                        rainbow_prob=rainbow_prob, direction=direction
+                    )[0]
+                elif chosen_shape == "rectangle":
+                    obj = self.sample_objs_with_rectangle(
+                        n=1, w_lims=[width,width], h_lims=[2,h_lim], 
+                        thickness=1, rainbow_prob=rainbow_prob
+                    )[0]
+                elif chosen_shape == "rectangleSolid":
+                    obj = self.sample_objs_with_rectangle_solid(
+                        n=1, w_lims=[width,width], h_lims=[2,h_lim], 
+                        rainbow_prob=rainbow_prob
+                    )[0]
+                objs_sampled.append(obj)
+            else:
+                for obj in self.obj_pool:
+                    obj_img_t = obj.image_t
+                    if obj_img_t.shape[1] == width and obj_img_t.shape[0] <= h_lim:
+                        objs_sampled.append(self.random_color(obj))
+                if len(objs_sampled) == 0:
+                    break
                 
-                img_t = torch.ones(h, w)
+                if len(objs_sampled) >= 1 and random.random() >= 0.5:
+                    return [random.choice(objs_sampled)]
 
-                if random_delete:
-                    img_t[random.randint(0, h-1), random.randint(0, w-1)] = self.background_c
+                objs_sampled = []
+                random_delete = True if random.random() >= 0.5 else False
+                random_delete = False
+                if len(objs_sampled) == 0 and random_generated == True:
+                    for i in range(n):
+                        w = width
+                        h = random.randint(2, h_lim)
 
-                new_obj = Object(img_t, position_tags=[])
-                if random.random() <= 1-rainbow_prob:
-                    objs_sampled.append(self.random_color(new_obj))
-                else:
-                    objs_sampled.append(self.random_color_rainbow(new_obj))
+                        img_t = torch.ones(h, w)
+
+                        if random_delete:
+                            img_t[random.randint(0, h-1), random.randint(0, w-1)] = self.background_c
+
+                        new_obj = Object(img_t, position_tags=[])
+                        if random.random() <= 1-rainbow_prob:
+                            objs_sampled.append(self.random_color(new_obj))
+                        else:
+                            objs_sampled.append(self.random_color_rainbow(new_obj))
 
         return objs_sampled
     
-    def sample_objs_by_fixed_height(self, n=1, height=5, w_lim=5, random_generated=True, rainbow_prob=0.2):
+    def sample_objs_by_fixed_height(self, n=1, height=5, w_lim=5, 
+                                    random_generated=True, rainbow_prob=0.2, 
+                                    concept_collection=["line", "Lshape", "rectangle", "rectangleSolid"]):
         """
         sample object within the width and height limits.
         if there is no such object in the pool, the engine
@@ -261,32 +331,63 @@ class ObjectEngine:
         """
         objs_sampled = []
         for i in range(n):
-            for obj in self.obj_pool:
-                obj_img_t = obj.image_t
-                if obj_img_t.shape[0] == height and obj_img_t.shape[1] <= w_lim:
-                    objs_sampled.append(self.random_color(obj))
-            if len(objs_sampled) == 0:
-                break
-        if len(objs_sampled) >= 1 and random.random() >= 0.5:
-            return [random.choice(objs_sampled)]
-        
-        objs_sampled = []
-        random_delete = True if random.random() >= 0.5 else False
-        if len(objs_sampled) == 0 and random_generated == True:
-            for i in range(n):
-                w = random.randint(2, w_lim)
-                h = height
+            chosen_shape = np.random.choice(concept_collection)
+            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid"}:
+                if chosen_shape == "line":
+                    direction = 0
+                    len_lims=[height,height]
+                    obj = self.sample_objs_with_line(
+                        n=1, len_lims=len_lims, 
+                        thickness=1, 
+                        direction=["v", "h"][direction],
+                        rainbow_prob=rainbow_prob
+                    )[0]
+                elif chosen_shape == "Lshape":
+                    direction=random.randint(0,3)
+                    obj = self.sample_objs_with_l_shape(
+                        n=1, w_lims=[2,w_lim], h_lims=[height,height], thickness=1, 
+                        rainbow_prob=rainbow_prob, direction=direction
+                    )[0]
+                elif chosen_shape == "rectangle":
+                    obj = self.sample_objs_with_rectangle(
+                        n=1, w_lims=[2,w_lim], h_lims=[height,height], 
+                        thickness=1, rainbow_prob=rainbow_prob
+                    )[0]
+                elif chosen_shape == "rectangleSolid":
+                    obj = self.sample_objs_with_rectangle_solid(
+                        n=1, w_lims=[2,w_lim], h_lims=[height,height], 
+                        rainbow_prob=rainbow_prob
+                    )[0]
+                objs_sampled.append(obj)
+            else:
+                for obj in self.obj_pool:
+                    obj_img_t = obj.image_t
+                    if obj_img_t.shape[0] == height and obj_img_t.shape[1] <= w_lim:
+                        objs_sampled.append(self.random_color(obj))
+                if len(objs_sampled) == 0:
+                    break
                 
-                img_t = torch.ones(h, w)
+                if len(objs_sampled) >= 1 and random.random() >= 0.5:
+                    return [random.choice(objs_sampled)]
 
-                if random_delete:
-                    img_t[random.randint(0, h-1), random.randint(0, w-1)] = self.background_c
+                objs_sampled = []
+                random_delete = True if random.random() >= 0.5 else False
+                random_delete = False
+                if len(objs_sampled) == 0 and random_generated == True:
+                    for i in range(n):
+                        w = random.randint(2, w_lim)
+                        h = height
 
-                new_obj = Object(img_t, position_tags=[])
-                if random.random() <= 1-rainbow_prob:
-                    objs_sampled.append(self.random_color(new_obj))
-                else:
-                    objs_sampled.append(self.random_color_rainbow(new_obj))
+                        img_t = torch.ones(h, w)
+
+                        if random_delete:
+                            img_t[random.randint(0, h-1), random.randint(0, w-1)] = self.background_c
+
+                        new_obj = Object(img_t, position_tags=[])
+                        if random.random() <= 1-rainbow_prob:
+                            objs_sampled.append(self.random_color(new_obj))
+                        else:
+                            objs_sampled.append(self.random_color_rainbow(new_obj))
 
         return objs_sampled
     

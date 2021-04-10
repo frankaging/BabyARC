@@ -166,8 +166,8 @@ class Canvas:
         
         if p_r == -1 and p_c == -1:
             random_pos_iter = []
-            for i in range(canvas_r-o_r):
-                for j in range(canvas_c-o_c):
+            for i in range((canvas_r-o_r)+1):
+                for j in range((canvas_c-o_c)+1):
                     random_pos_iter.append((i,j))
             random.shuffle(random_pos_iter)
             for pos in random_pos_iter:
@@ -249,13 +249,18 @@ class Canvas:
         
         potential_pool = []
         # only overlook the potential regions of interst
-        
         # we cannot consider pos tag here
         random_pos_iter = []
-        for i in range(rel_p_r, rel_p_r+rel_r-o_r-1):
-            for j in range(rel_p_c, rel_p_c+rel_c-o_c-1):
+        for i in range(rel_p_r, (rel_p_r+rel_r-o_r)+1):
+            for j in range(rel_p_c, (rel_p_c+rel_c-o_c)+1):
                 random_pos_iter.append((i,j))
+        # print(o_r, o_c)
+        # print(p_r, p_c)
+        # print(rel_r, rel_c, rel_p_r, rel_p_c)
+        # print(self.init_canvas.shape[0], self.init_canvas.shape[1])
+        # print(random_pos_iter)
         random.shuffle(random_pos_iter)
+        
         for pos in random_pos_iter:
             i = pos[0]
             j = pos[1]
@@ -879,6 +884,19 @@ class Canvas:
             self.opos_map[curr_obj_idx] = (placement_r, placement_c)
             return (placement_r, placement_c)
         return -1
+    
+    def placement_inplace(self, to_placement_obj, to_relate_objs=[], placement_rule=None, 
+                          connect_allow=False, # deprecated
+                          allow_overlap=False, 
+                          allow_connect=False):
+        """
+        This function just change current objects without adding new objects on the canvas.
+        If this placement rule is not possible, we will return -1 as before as well.
+        """
+        assert placement_rule in {"SameAll", "SameShape", "SameColor", 
+                                     "SameRow", "SameCol",
+                                     "IsInside", "IsTouch"}
+        pass
                     
 class CanvasEngine:
     def __init__(self, background_color=0, min_length=10, max_length=30):

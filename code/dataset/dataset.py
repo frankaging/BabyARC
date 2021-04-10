@@ -113,7 +113,8 @@ class BabyARCDataset(object):
     def sample_single_canvas_by_core_edges(self, edges, is_plot=True, 
                                            min_length=20, max_length=30, 
                                            allow_connect=False,
-                                           rainbow_prob=0.2):
+                                           rainbow_prob=0.2, 
+                                           concept_collection=["line", "Lshape", "rectangle", "rectangleSolid"]):
         relation_num = len(edges)
         nodes = OrderedDict({ })
 
@@ -181,14 +182,14 @@ class BabyARCDataset(object):
                         elif line_spec[2] == 1:
                             direction = "h"
                         obj_refer = self.ObE.sample_objs_with_line(n=1, len_lims=len_lims, 
-                                                              thickness=thickness, 
-                                                              direction=direction,
-                                                              rainbow_prob=rainbow_prob)[0]
+                                                                  thickness=thickness, 
+                                                                  direction=direction,
+                                                                  rainbow_prob=rainbow_prob)[0]
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
                                                                  connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
                             break
-                    elif node_right.startswith("rectangle"):
+                    elif node_right.startswith("rectangle") and not node_right.startswith("rectangleSolid"):
                         rect_spec = node_right.split("_")[-1]
                         rect_spec = ast.literal_eval(rect_spec)
                         if rect_spec[0] != -1:
@@ -205,6 +206,25 @@ class BabyARCDataset(object):
                                                                  connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
                             break
+                    elif node_right.startswith("rectangleSolid"):
+                        rect_spec = node_right.split("_")[-1]
+                        rect_spec = ast.literal_eval(rect_spec)
+                        if rect_spec[0] != -1:
+                            w_lims = [rect_spec[0], rect_spec[0]]
+                        else:
+                            w_lims = [5, test_canvas.init_canvas.shape[1]-1]
+                        if rect_spec[1] != -1:
+                            h_lims = [rect_spec[1], rect_spec[1]]
+                        else:
+                            h_lims = [5, test_canvas.init_canvas.shape[0]-1]
+                        obj_refer = self.ObE.sample_objs_with_rectangle_solid(
+                            n=1, w_lims=w_lims, h_lims=h_lims,
+                            rainbow_prob=rainbow_prob
+                        )[0]
+                        placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
+                                                                 connect_allow=allow_connect) # place old obj with free pos
+                        if placement_result == -1:
+                            break   
                     elif node_right.startswith("Lshape"):
                         lshape_spec = node_right.split("_")[-1]
                         lshape_spec = ast.literal_eval(lshape_spec)
@@ -436,109 +456,271 @@ class BabyARCDataset(object):
                 new_node_count += 1
             if node_right not in placed_objs:
                 new_node_count += 1
+            
             if new_node_count == 0:
-                raise ValueError("Placement step failed! Check your relation map!")
-
-            if new_node_count == 2:
+                # support inplace object manipulations for some relations
+                # placement_result = test_canvas.placement_inplace(
+                #     nodes[node_left], 
+                #     to_relate_objs=[nodes[node_right]], 
+                #     placement_rule=rel_n
+                # )
+                print("Inplace Object Placement Is Not Allowed!")
+                assert False
+            elif new_node_count == 2:
                 if rel_n == "IsInside":
+                    # UPDATE STATUS: DONE
+                    # sample a outside reactangle
+                    w_lims = [4, test_canvas.init_canvas.shape[1]]
+                    h_lims = [4, test_canvas.init_canvas.shape[0]]
                     # this is to place the object inside referring to the outside object
-                    out_obj = self.ObE.sample_objs_with_rectangle(n=1, thickness=1, rainbow_prob=0.3, 
-                                                              w_lims=[6,8], h_lims=[6,8])[0] 
+                    out_obj = self.ObE.sample_objs_with_rectangle(
+                        n=1, thickness=1, rainbow_prob=rainbow_prob,
+                        w_lims=w_lims, h_lims=h_lims
+                    )[0] 
+                    
                     placement_result = test_canvas.placement(out_obj)
                     if placement_result == -1:
                         break
                     nodes[node_right] = current_id
                     current_id += 1
-                    in_obj = self.ObE.sample_objs_by_bound_area(n=1, rainbow_prob=0.2, 
-                                                           w_lim=3, h_lim=3)[0]
-                    placement_result = test_canvas.placement(in_obj, to_relate_objs=[nodes[node_right]], placement_rule="IsInside")
+                    in_obj = self.ObE.sample_objs_by_bound_area(
+                        n=1, rainbow_prob=rainbow_prob, 
+                        w_lim=out_obj.image_t.shape[1]-2, h_lim=out_obj.image_t.shape[0]-2,
+                        concept_collection=concept_collection
+                    )[0]
+                    placement_result = test_canvas.placement(
+                        in_obj, to_relate_objs=[nodes[node_right]], 
+                        placement_rule="IsInside", connect_allow=allow_connect
+                    )
                     if placement_result == -1:
                         break
                     nodes[node_left] = current_id
                     current_id += 1
-
                 elif rel_n == "SameAll":
-                    obj_new = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    # UPDATE STATUS: DONE
+                    # obj_new = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    # let us restrict this a little bit, so there are space for other objects
+                    amortize_ratio = [1,2]
+                    ratio = np.random.choice(amortize_ratio)
+                    w_lim = int((test_canvas.init_canvas.shape[1]-1)/ratio)
+                    if ratio == 1:
+                        ratio = np.random.choice([2])
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    else:
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    obj_new = self.ObE.sample_objs_by_bound_area(
+                        n=1, rainbow_prob=rainbow_prob, 
+                        w_lim=w_lim, h_lim=h_lim,
+                        concept_collection=concept_collection
+                    )[0]
                     obj_new_copy = copy.deepcopy(obj_new)
                     placement_result = test_canvas.placement(obj_new)
                     if placement_result == -1:
                         break
                     nodes[node_left] = current_id
                     current_id += 1
-                    placement_result = test_canvas.placement(obj_new_copy)
+                    placement_result = test_canvas.placement(obj_new_copy, connect_allow=allow_connect)
                     if placement_result == -1:
                         break
                     nodes[node_right] = current_id
                     current_id += 1
                 elif rel_n == "SameRow":
-                    obj_anchor = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    # UPDATE STATUS: DONE
+                    # obj_anchor = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    amortize_ratio = [1,2]
+                    ratio = np.random.choice(amortize_ratio)
+                    w_lim = int((test_canvas.init_canvas.shape[1]-1)/ratio)
+                    if ratio == 1:
+                        ratio = np.random.choice([2])
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    else:
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    obj_anchor = self.ObE.sample_objs_by_bound_area(
+                        n=1, rainbow_prob=rainbow_prob, 
+                        w_lim=w_lim, h_lim=h_lim,
+                        concept_collection=concept_collection
+                    )[0]
                     placement_result = test_canvas.placement(obj_anchor)
                     if placement_result == -1:
                         break
                     nodes[node_left] = current_id
                     current_id += 1
-                    obj_refer = self.ObE.sample_objs_by_fixed_height(n=1, rainbow_prob=0.2, 
-                                                                height=obj_anchor.image_t.shape[0], w_lim=5)[0]
-                    placement_result = test_canvas.placement(obj_refer, to_relate_objs=[nodes[node_left]], placement_rule=rel_n)
+                    
+                    # this may fail, we wamt tp retry
+                    amortize_retry = 5
+                    for _ in range(amortize_retry):
+                        obj_refer = self.ObE.sample_objs_by_fixed_height(
+                            n=1, rainbow_prob=rainbow_prob, 
+                            height=obj_anchor.image_t.shape[0], w_lim=w_lim, 
+                            concept_collection=concept_collection
+                        )[0]
+                        placement_result = test_canvas.placement(
+                            obj_refer, to_relate_objs=[nodes[node_left]], 
+                            placement_rule=rel_n, 
+                            connect_allow=allow_connect
+                        )
+                        if placement_result != -1:
+                            break
                     if placement_result == -1:
                         break
                     nodes[node_right] = current_id
                     current_id += 1
+
                 elif rel_n == "SameCol":
-                    obj_anchor = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    # UPDATE STATUS: DONE
+                    # obj_anchor = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    amortize_ratio = [1,2]
+                    ratio = np.random.choice(amortize_ratio)
+                    w_lim = int((test_canvas.init_canvas.shape[1]-1)/ratio)
+                    if ratio == 1:
+                        ratio = np.random.choice([2])
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    else:
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    obj_anchor = self.ObE.sample_objs_by_bound_area(
+                        n=1, rainbow_prob=rainbow_prob, 
+                        w_lim=w_lim, h_lim=h_lim,
+                        concept_collection=concept_collection
+                    )[0]
                     placement_result = test_canvas.placement(obj_anchor)
                     if placement_result == -1:
                         break
                     nodes[node_left] = current_id
                     current_id += 1
-                    obj_refer = self.ObE.sample_objs_by_fixed_width(n=1, rainbow_prob=0.2, 
-                                                               width=obj_anchor.image_t.shape[1], h_lim=5)[0]
-                    placement_result = test_canvas.placement(obj_refer, to_relate_objs=[nodes[node_left]], placement_rule=rel_n)
+                    # this may fail, we wamt tp retry
+                    amortize_retry = 5
+                    for _ in range(amortize_retry):
+                        obj_refer = self.ObE.sample_objs_by_fixed_width(
+                            n=1, rainbow_prob=rainbow_prob, 
+                            width=obj_anchor.image_t.shape[1], h_lim=h_lim, 
+                            concept_collection=concept_collection
+                        )[0]
+                        placement_result = test_canvas.placement(
+                            obj_refer, to_relate_objs=[nodes[node_left]], 
+                            placement_rule=rel_n, 
+                            connect_allow=allow_connect
+                        )
+                        if placement_result != -1:
+                            break
                     if placement_result == -1:
                         break
                     nodes[node_right] = current_id
                     current_id += 1
                 elif rel_n == "IsTouch":
-                    obj_anchor = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    # UPDATE STATUS: DONE
+                    # obj_anchor = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    amortize_ratio = [1,2]
+                    ratio = np.random.choice(amortize_ratio)
+                    w_lim = int((test_canvas.init_canvas.shape[1]-1)/ratio)
+                    if ratio == 1:
+                        ratio = np.random.choice([2])
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    else:
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    obj_anchor = self.ObE.sample_objs_by_bound_area(
+                        n=1, rainbow_prob=rainbow_prob, 
+                        w_lim=w_lim, h_lim=h_lim,
+                        concept_collection=concept_collection
+                    )[0]
                     placement_result = test_canvas.placement(obj_anchor)
                     if placement_result == -1:
                         break
                     nodes[node_left] = current_id
                     current_id += 1
-                    obj_refer = self.ObE.sample_objs_by_bound_area(n=1, rainbow_prob=0.2, 
-                                                              w_lim=3, h_lim=3)[0]
-                    placement_result = test_canvas.placement(obj_refer, to_relate_objs=[nodes[node_left]], placement_rule=rel_n)
+                    
+                    # this may fail, we wamt tp retry
+                    amortize_retry = 5
+                    for _ in range(amortize_retry):
+                        obj_refer = self.ObE.sample_objs_by_bound_area(
+                            n=1, rainbow_prob=rainbow_prob, 
+                            w_lim=w_lim, h_lim=h_lim
+                        )[0]
+                        placement_result = test_canvas.placement(
+                            obj_refer, to_relate_objs=[nodes[node_left]], 
+                            placement_rule=rel_n, 
+                            connect_allow=allow_connect
+                        )
+                        if placement_result != -1:
+                            break
                     if placement_result == -1:
                         break
                     nodes[node_right] = current_id
                     current_id += 1
-
                 elif rel_n == "SameShape":
-                    obj_anchor = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    # UPDATE STATUS: DONE
+                    # obj_anchor = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    amortize_ratio = [1,2]
+                    ratio = np.random.choice(amortize_ratio)
+                    w_lim = int((test_canvas.init_canvas.shape[1]-1)/ratio)
+                    if ratio == 1:
+                        ratio = np.random.choice([2])
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    else:
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    obj_anchor = self.ObE.sample_objs_by_bound_area(
+                        n=1, rainbow_prob=rainbow_prob, 
+                        w_lim=w_lim, h_lim=h_lim,
+                        concept_collection=concept_collection
+                    )[0]
                     placement_result = test_canvas.placement(obj_anchor)
                     if placement_result == -1:
                         break
                     nodes[node_left] = current_id
                     current_id += 1
-                    obj_refer = self.ObE.random_color(obj_anchor)
-                    placement_result = test_canvas.placement(obj_refer, placement_rule="SameShape", consider_tag=False) # place old obj with free pos
+                    
+                    # this may fail, we wamt tp retry
+                    amortize_retry = 5
+                    for _ in range(amortize_retry):
+                        obj_refer = self.ObE.random_color(
+                            obj_anchor, rainbow_prob=rainbow_prob
+                        )
+                        placement_result = test_canvas.placement(
+                            obj_refer, placement_rule="SameShape", 
+                            consider_tag=False, 
+                            connect_allow=allow_connect
+
+                        ) # place old obj with free pos
+                        if placement_result != -1:
+                            break
                     if placement_result == -1:
                         break
                     nodes[node_right] = current_id
                     current_id += 1
-
                 elif rel_n == "SameColor":
-                    obj_anchor = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    # UPDATE STATUS: DONE
+                    # obj_anchor = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    amortize_ratio = [1,2]
+                    ratio = np.random.choice(amortize_ratio)
+                    w_lim = int((test_canvas.init_canvas.shape[1]-1)/ratio)
+                    if ratio == 1:
+                        ratio = np.random.choice([2])
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    else:
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    obj_anchor = self.ObE.sample_objs_by_bound_area(
+                        n=1, rainbow_prob=rainbow_prob, 
+                        w_lim=w_lim, h_lim=h_lim,
+                        concept_collection=concept_collection
+                    )[0]
                     placement_result = test_canvas.placement(obj_anchor)
                     if placement_result == -1:
                         break
                     nodes[node_left] = current_id
                     current_id += 1
-                    new_c = test_canvas.unify_color(nodes[node_left])
-                    # random get an object
-                    obj_refer = self.ObE.sample_objs(n=1, is_plot=False)[0]
-                    obj_refer = self.ObE.fix_color(obj_refer, new_color=new_c)
-                    placement_result = test_canvas.placement(obj_refer, placement_rule="SameColor", consider_tag=False) # place old obj with free pos
+                    # this may fail, we wamt tp retry
+                    amortize_retry = 5
+                    for _ in range(amortize_retry):
+                        new_c = test_canvas.unify_color(nodes[node_left])
+                        # random get an object
+                        obj_refer = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                        obj_refer = self.ObE.fix_color(obj_refer, new_color=new_c)
+                        placement_result = test_canvas.placement(
+                            obj_refer, placement_rule="SameColor", 
+                            consider_tag=False, 
+                            connect_allow=allow_connect
+                        ) # place old obj with free pos
+                        if placement_result != -1:
+                            break
                     if placement_result == -1:
                         break
                     nodes[node_right] = current_id
@@ -546,6 +728,7 @@ class BabyARCDataset(object):
                 placed_objs.add(node_left)
                 placed_objs.add(node_right)
             elif new_node_count == 1:
+                # UPDATE STATUS: NOTSTART for this whole branch, it is probably outdated!
                 # we only need to place the new obj
                 node_new = node_left if node_left not in placed_objs else node_right
                 node_old = node_left if node_new == node_right else node_right
