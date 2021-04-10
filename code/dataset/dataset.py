@@ -195,11 +195,11 @@ class BabyARCDataset(object):
                         if rect_spec[0] != -1:
                             w_lims = [rect_spec[0], rect_spec[0]]
                         else:
-                            w_lims = [5, test_canvas.init_canvas.shape[1]-1]
+                            w_lims = [2, test_canvas.init_canvas.shape[1]-1]
                         if rect_spec[1] != -1:
                             h_lims = [rect_spec[1], rect_spec[1]]
                         else:
-                            h_lims = [5, test_canvas.init_canvas.shape[0]-1]    
+                            h_lims = [2, test_canvas.init_canvas.shape[0]-1]    
                         obj_refer = self.ObE.sample_objs_with_rectangle(n=1, w_lims=w_lims, h_lims=h_lims, 
                                                                          thickness=1, rainbow_prob=rainbow_prob)[0]
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
@@ -212,11 +212,11 @@ class BabyARCDataset(object):
                         if rect_spec[0] != -1:
                             w_lims = [rect_spec[0], rect_spec[0]]
                         else:
-                            w_lims = [5, test_canvas.init_canvas.shape[1]-1]
+                            w_lims = [2, test_canvas.init_canvas.shape[1]-1]
                         if rect_spec[1] != -1:
                             h_lims = [rect_spec[1], rect_spec[1]]
                         else:
-                            h_lims = [5, test_canvas.init_canvas.shape[0]-1]
+                            h_lims = [2, test_canvas.init_canvas.shape[0]-1]
                         obj_refer = self.ObE.sample_objs_with_rectangle_solid(
                             n=1, w_lims=w_lims, h_lims=h_lims,
                             rainbow_prob=rainbow_prob
@@ -231,11 +231,11 @@ class BabyARCDataset(object):
                         if lshape_spec[0] != -1:
                             w_lims = [lshape_spec[0], lshape_spec[0]]
                         else:
-                            w_lims = [5, test_canvas.init_canvas.shape[1]-1]
+                            w_lims = [2, test_canvas.init_canvas.shape[1]-1]
                         if lshape_spec[1] != -1:
                             h_lims = [lshape_spec[1], lshape_spec[1]]
                         else:
-                            h_lims = [5, test_canvas.init_canvas.shape[0]-1]   
+                            h_lims = [2, test_canvas.init_canvas.shape[0]-1]   
                         if lshape_spec[2] == -1:
                             directions=[0, 1, 2, 3]
                             direction = random.sample(directions, k=1)[0]
@@ -256,11 +256,11 @@ class BabyARCDataset(object):
                         if rect_spec[0] != -1:
                             w_lims = [rect_spec[0], rect_spec[0]]
                         else:
-                            w_lims = [5, test_canvas.init_canvas.shape[1]-1]
+                            w_lims = [2, test_canvas.init_canvas.shape[1]-1]
                         if rect_spec[1] != -1:
                             h_lims = [rect_spec[1], rect_spec[1]]
                         else:
-                            h_lims = [5, test_canvas.init_canvas.shape[0]-1]
+                            h_lims = [2, test_canvas.init_canvas.shape[0]-1]
                         axis_spec = node_right.split("_")[-1]
                         axis_spec = ast.literal_eval(axis_spec)
                         obj_refer = self.ObE.sample_objs_with_symmetry_shape(
@@ -276,11 +276,11 @@ class BabyARCDataset(object):
                         if rect_spec[0] != -1:
                             w_lims = [rect_spec[1], rect_spec[1]]
                         else:
-                            w_lims = [3, test_canvas.init_canvas.shape[1]]
+                            w_lims = [4, test_canvas.init_canvas.shape[1]]
                         if rect_spec[1] != -1:
                             h_lims = [rect_spec[0], rect_spec[0]]
                         else:
-                            h_lims = [3, test_canvas.init_canvas.shape[0]]
+                            h_lims = [4, test_canvas.init_canvas.shape[0]]
                         if rect_spec[-1] == -1:
                             gravities = [True, False]
                             gravity = random.sample(gravities, k=1)[0]
