@@ -20,18 +20,13 @@ import hashlib
 import uuid 
 import ast
 # Baby-ARC related imports
-try:
-    from .constants import *
-    from .utils import *
-    from .objects import *
-    from .canvas import *
-    from .operator import *
-except:
-    from constants import *
-    from utils import *
-    from objects import *
-    from canvas import *
-    from operator import *
+#try:
+from .constants import *
+from .utils import *
+from .objects import *
+from .canvas import *
+from .operator import *
+
 from itertools import product
 import re
 

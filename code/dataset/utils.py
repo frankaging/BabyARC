@@ -7,13 +7,6 @@ import scipy.ndimage
 import numpy as np
 
 # Baby-ARC related imports
-try:
-    from .constants import *
-    from .objects import *
-except:
-    from constants import *
-    from objects import *
-
 
 def to_np_array(*arrays, **kwargs):
     array_list = []

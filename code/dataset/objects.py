@@ -20,12 +20,8 @@ import hashlib
 import uuid 
 import ast
 # Baby-ARC related imports
-try:
-    from .constants import *
-    from .utils import *
-except:
-    from constants import *
-    from utils import *
+from .constants import *
+from .utils import find_connected_components
     
 import logging
 FORMAT = "%(asctime)-15s %(message)s"
@@ -718,53 +714,60 @@ class ObjectEngine:
         # can have 4 symmetry axis [0 (-), 1(|), 2(\), 3(/)]
         objs_sampled = []
         for i in range(n):
-            # based on the axis, we calculate the lims
-            if 2 in axis_list or 3 in axis_list:
-                _lim_1 = min(w_lims[0], h_lims[0])
-                _lim_2 = min(w_lims[1], h_lims[1])
-                s = random.randint(_lim_1, _lim_2)
-                w = s
-                h = s # make it a square
-            else: 
-                w = random.randint(w_lims[0], w_lims[1])
-                h = random.randint(h_lims[0], h_lims[1])
+            found_valid = False
+            while not found_valid:
+                # based on the axis, we calculate the lims
+                if 2 in axis_list or 3 in axis_list:
+                    _lim_1 = min(w_lims[0], h_lims[0])
+                    _lim_2 = min(w_lims[1], h_lims[1])
+                    s = random.randint(_lim_1, _lim_2)
+                    w = s
+                    h = s # make it a square
+                else: 
+                    w = random.randint(w_lims[0], w_lims[1])
+                    h = random.randint(h_lims[0], h_lims[1])
 
-            seed_img_t = (torch.rand(size=(h,w)) <= solid_prob).int()
-            while len(seed_img_t.unique()) == 1 and seed_img_t[0] == 0:
-                seed_img_t = (torch.rand(size=(h,w)) <= solid_prob).int() # reject sampling
+                seed_img_t = (torch.rand(size=(h,w)) <= solid_prob).int()
+                while len(seed_img_t.unique()) == 1 and seed_img_t[0] == 0:
+                    seed_img_t = (torch.rand(size=(h,w)) <= solid_prob).int() # reject sampling
 
-            if random.random() <= 1-rainbow_prob:
-                seed_img_t = self._random_color(seed_img_t)
-            else:
-                seed_img_t = self._random_color_rainbow(seed_img_t)
+                if random.random() <= 1-rainbow_prob:
+                    seed_img_t = self._random_color(seed_img_t)
+                else:
+                    seed_img_t = self._random_color_rainbow(seed_img_t)
 
-            for axis in axis_list:
-                if axis == 0:
-                    sym_img_t = seed_img_t.flip(-2)
-                    start_r = int(math.ceil(h/2))
-                    for i in range(start_r, h):
-                        for j in range(0, w):
-                            seed_img_t[i,j] = sym_img_t[i,j]
-                elif axis == 1:
-                    sym_img_t = seed_img_t.flip(-1)
-                    start_c = int(math.ceil(w/2))
-                    for i in range(0, h):
-                        for j in range(start_c, w):
-                            seed_img_t[i,j] = sym_img_t[i,j]
-                elif axis == 2:
-                    assert seed_img_t.shape[0] == seed_img_t.shape[1]
-                    sym_img_t = torch.rot90(seed_img_t, k=1, dims=(-2, -1)).flip(-2)
-                    for i in range(1, h):
-                        for j in range(0, i):
-                            seed_img_t[i,j] = sym_img_t[i,j]
-                elif axis == 3:
-                    assert seed_img_t.shape[0] == seed_img_t.shape[1]
-                    sym_img_t = torch.rot90(seed_img_t, k=1, dims=(-2, -1)).flip(-1)
-                    for i in range(1, h):
-                        for j in range(w-i, w):
-                            seed_img_t[i,j] = sym_img_t[i,j]
-
-            new_obj = Object(seed_img_t, position_tags=[])
-            objs_sampled.append(new_obj)
+                for axis in axis_list:
+                    if axis == 0:
+                        sym_img_t = seed_img_t.flip(-2)
+                        start_r = int(math.ceil(h/2))
+                        for i in range(start_r, h):
+                            for j in range(0, w):
+                                seed_img_t[i,j] = sym_img_t[i,j]
+                    elif axis == 1:
+                        sym_img_t = seed_img_t.flip(-1)
+                        start_c = int(math.ceil(w/2))
+                        for i in range(0, h):
+                            for j in range(start_c, w):
+                                seed_img_t[i,j] = sym_img_t[i,j]
+                    elif axis == 2:
+                        assert seed_img_t.shape[0] == seed_img_t.shape[1]
+                        sym_img_t = torch.rot90(seed_img_t, k=1, dims=(-2, -1)).flip(-2)
+                        for i in range(1, h):
+                            for j in range(0, i):
+                                seed_img_t[i,j] = sym_img_t[i,j]
+                    elif axis == 3:
+                        assert seed_img_t.shape[0] == seed_img_t.shape[1]
+                        sym_img_t = torch.rot90(seed_img_t, k=1, dims=(-2, -1)).flip(-1)
+                        for i in range(1, h):
+                            for j in range(w-i, w):
+                                seed_img_t[i,j] = sym_img_t[i,j]
+                  
+                # check if this is valid, if yet, set the flag and add into the return list
+                n_objs = find_connected_components(seed_img_t, is_diag=True)
+                n_objs = len(n_objs)
+                if n_objs == 1:
+                    new_obj = Object(seed_img_t, position_tags=[])
+                    objs_sampled.append(new_obj)
+                    break
         
         return objs_sampled
