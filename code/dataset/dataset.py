@@ -459,8 +459,13 @@ class BabyARCDataset(object):
                 #     to_relate_objs=[nodes[node_right]], 
                 #     placement_rule=rel_n
                 # )
-                print("Inplace Object Placement Is Not Allowed!")
-                assert False
+                if rel_n == "SameColor":
+                    # we allow color change i think.
+                    print("Inplace Object Placement Is Not Allowed!")
+                    assert False
+                else:
+                    print("Inplace Object Placement Is Not Allowed!")
+                    assert False
             elif new_node_count == 2:
                 if rel_n == "IsInside":
                     # UPDATE STATUS: DONE
