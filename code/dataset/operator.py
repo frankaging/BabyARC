@@ -623,7 +623,7 @@ class OperatorEngine(object):
                         new_canvas.opos_map[oid] = new_pos
                         new_canvas.node_id_map[_obj] = oid
                         new_canvas.id_node_map[oid] = _obj
-                new_canvas.reconsile()
+                new_canvas.reconcile()
                 operated_canvas.append(new_canvas)
                 canvas_idx += 1
         return operated_canvas, selector_type

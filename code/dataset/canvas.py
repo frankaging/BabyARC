@@ -80,7 +80,7 @@ class Canvas:
                           9: [.64, .16, .16],
                          }   
     
-    def reconsile(self):
+    def reconcile(self):
         updated_canvas, r_diff, c_diff = self.render(is_plot=False, minimum_cover=False)
         self.image_t = updated_canvas
         self.partial_relation_edges = self.parse_relations()
@@ -97,7 +97,13 @@ class Canvas:
         for k, v in self.oid_map.items():
             self.oid_map[k] = Object(v, position_tags=[])
         self.opos_map = repre_dict['id_position_map']
-        self.partial_relation_edges = repre_dict['partial_relation_edges']
+        # we need to turn this into multiedge cases
+        self.partial_relation_edges = OrderedDict()
+        for edge, relation in repre_dict['partial_relation_edges'].items():
+            if edge not in self.partial_relation_edges:
+                self.partial_relation_edges[edge] = [relation]
+            else:
+                self.partial_relation_edges[edge].append(relation)
         self.node_id_map = repre_dict['node_id_map']
         for k, v in self.node_id_map.items():
             self.id_node_map[v] = k
@@ -803,14 +809,15 @@ class Canvas:
             (r, c) = self.opos_map[oid]
             obj = self.oid_map[oid]
             color_list = obj.image_t.unique().tolist()
+            color_list = list(set(color_list) - {self.background_color}) # remove background color
             if len(color_list) == 1:
                 color = int(color_list[0])
                 # color attr
-                relation_edges[(oid, f"color_[{color}]")] = "Attr"
+                relation_edges[(oid, f"color_[{color}]")] = ["Attr"]
             # pos attr
             else:
                 pass # we will not record color = -1 case
-            relation_edges[(oid, f"pos_[{r},{c}]")] = "Attr"
+            relation_edges[(oid, f"pos_[{r},{c}]")] = ["Attr"]
         # add relations
         for oid_left in self.oid_map.keys():
             for oid_right in self.oid_map.keys():
@@ -823,31 +830,70 @@ class Canvas:
                     
                     if SameShape(obj_left.image_t, (r_left, c_left), 
                                  obj_right.image_t, (r_right, c_right)):
-                        relation_edges[(oid_left, oid_right)] = "SameShape"
-                        relation_edges[(oid_right, oid_left)] = "SameShape"
+                        if (oid_left, oid_right) in relation_edges:
+                            relation_edges[(oid_left, oid_right)].append("SameShape")
+                        else:
+                            relation_edges[(oid_left, oid_right)] = ["SameShape"]
+                        if (oid_right, oid_left) in relation_edges:
+                            relation_edges[(oid_right, oid_left)].append("SameShape")
+                        else:             
+                            relation_edges[(oid_right, oid_left)] = ["SameShape"]
                     if SameColor(obj_left.image_t, (r_left, c_left), 
                                  obj_right.image_t, (r_right, c_right)):
-                        relation_edges[(oid_left, oid_right)] = "SameColor"
-                        relation_edges[(oid_right, oid_left)] = "SameColor"
+                        if (oid_left, oid_right) in relation_edges:
+                            relation_edges[(oid_left, oid_right)].append("SameColor")
+                        else:
+                            relation_edges[(oid_left, oid_right)] = ["SameColor"]
+                        if (oid_right, oid_left) in relation_edges:
+                            relation_edges[(oid_right, oid_left)].append("SameColor")
+                        else:             
+                            relation_edges[(oid_right, oid_left)] = ["SameColor"]
                     if SameAll(obj_left.image_t, (r_left, c_left), 
                                  obj_right.image_t, (r_right, c_right)):
-                        relation_edges[(oid_left, oid_right)] = "SameAll"
-                        relation_edges[(oid_right, oid_left)] = "SameAll"
+                        if (oid_left, oid_right) in relation_edges:
+                            relation_edges[(oid_left, oid_right)].append("SameAll")
+                        else:
+                            relation_edges[(oid_left, oid_right)] = ["SameAll"]
+                        if (oid_right, oid_left) in relation_edges:
+                            relation_edges[(oid_right, oid_left)].append("SameAll")
+                        else:             
+                            relation_edges[(oid_right, oid_left)] = ["SameAll"]
                     if SameRow(obj_left.image_t, (r_left, c_left), 
                                  obj_right.image_t, (r_right, c_right)):
-                        relation_edges[(oid_left, oid_right)] = "SameRow"
-                        relation_edges[(oid_right, oid_left)] = "SameRow"
+                        if (oid_left, oid_right) in relation_edges:
+                            relation_edges[(oid_left, oid_right)].append("SameRow")
+                        else:
+                            relation_edges[(oid_left, oid_right)] = ["SameRow"]
+                        if (oid_right, oid_left) in relation_edges:
+                            relation_edges[(oid_right, oid_left)].append("SameRow")
+                        else:             
+                            relation_edges[(oid_right, oid_left)] = ["SameRow"]
                     if SameCol(obj_left.image_t, (r_left, c_left), 
                                  obj_right.image_t, (r_right, c_right)):
-                        relation_edges[(oid_left, oid_right)] = "SameCol"
-                        relation_edges[(oid_right, oid_left)] = "SameCol"
+                        if (oid_left, oid_right) in relation_edges:
+                            relation_edges[(oid_left, oid_right)].append("SameCol")
+                        else:
+                            relation_edges[(oid_left, oid_right)] = ["SameCol"]
+                        if (oid_right, oid_left) in relation_edges:
+                            relation_edges[(oid_right, oid_left)].append("SameCol")
+                        else:             
+                            relation_edges[(oid_right, oid_left)] = ["SameCol"]
                     if IsInside(obj_left.image_t, (r_left, c_left), 
                                  obj_right.image_t, (r_right, c_right)):
-                        relation_edges[(oid_left, oid_right)] = "IsInside"
+                        if (oid_left, oid_right) in relation_edges:
+                            relation_edges[(oid_left, oid_right)].append("IsInside")
+                        else:
+                            relation_edges[(oid_left, oid_right)] = ["IsInside"]
                     if IsTouch(obj_left.image_t, (r_left, c_left), 
                                  obj_right.image_t, (r_right, c_right)):
-                        relation_edges[(oid_left, oid_right)] = "IsTouch" 
-                        relation_edges[(oid_right, oid_left)] = "IsTouch"
+                        if (oid_left, oid_right) in relation_edges:
+                            relation_edges[(oid_left, oid_right)].append("IsTouch")
+                        else:
+                            relation_edges[(oid_left, oid_right)] = ["IsTouch"]
+                        if (oid_right, oid_left) in relation_edges:
+                            relation_edges[(oid_right, oid_left)].append("IsTouch")
+                        else:             
+                            relation_edges[(oid_right, oid_left)] = ["IsTouch"]
         return relation_edges
     
     def change_obj_color(self, oid, new_color):
