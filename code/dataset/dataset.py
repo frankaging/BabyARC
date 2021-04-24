@@ -738,7 +738,7 @@ class BabyARCDataset(object):
                         # this is unlikely to succeed as the outer obj is randomly sampled
                         # from our object pool.
                         # the new obj is the inside obj
-                        in_obj = self.ObE.sample_objs_by_bound_area(n=1, rainbow_prob=0.2, 
+                        in_obj = self.ObE.sample_objs_by_bound_area(n=1, rainbow_prob=rainbow_prob, 
                                                                w_lim=3, h_lim=3)[0]
                         placement_result = test_canvas.placement(in_obj, 
                                                                  to_relate_objs=[nodes[node_old]], 
@@ -746,7 +746,7 @@ class BabyARCDataset(object):
                     else:
                         # the new obj is the outside obj
                         # this is to place the object inside referring to the outside object
-                        out_obj = self.ObE.sample_objs_with_rectangle(n=1, thickness=1, rainbow_prob=0.3, 
+                        out_obj = self.ObE.sample_objs_with_rectangle(n=1, thickness=1, rainbow_prob=rainbow_prob, 
                                                                   w_lims=[8,10], h_lims=[8,10])[0] 
                         placement_result = test_canvas.placement(out_obj, 
                                                                  to_relate_objs=[nodes[node_old]], 
@@ -760,21 +760,21 @@ class BabyARCDataset(object):
                 elif rel_n == "SameRow":
                     # we need to actually make sure height is the same
                     height_old = obj_old.image_t.shape[0]
-                    in_obj = self.ObE.sample_objs_by_fixed_height(n=1, rainbow_prob=0.2, height=height_old, w_lim=5)[0]
+                    in_obj = self.ObE.sample_objs_by_fixed_height(n=1, rainbow_prob=rainbow_prob, height=height_old, w_lim=5)[0]
                     placement_result = test_canvas.placement(in_obj, to_relate_objs=[nodes[node_old]], placement_rule=rel_n)
                 elif rel_n == "SameCol":
                     # we need to actually make sure width
                     width_old = obj_old.image_t.shape[1]
-                    in_obj = self.ObE.sample_objs_by_fixed_width(n=1, rainbow_prob=0.2, width=width_old, h_lim=5)[0]
+                    in_obj = self.ObE.sample_objs_by_fixed_width(n=1, rainbow_prob=rainbow_prob, width=width_old, h_lim=5)[0]
                     placement_result = test_canvas.placement(in_obj, to_relate_objs=[nodes[node_old]], placement_rule=rel_n)
                 elif rel_n == "IsTouch":
-                    in_obj = self.ObE.sample_objs_by_bound_area(n=1, rainbow_prob=0.2, 
+                    in_obj = self.ObE.sample_objs_by_bound_area(n=1, rainbow_prob=rainbow_prob, 
                                                            w_lim=3, h_lim=3)[0]
                     placement_result = test_canvas.placement(in_obj, to_relate_objs=[nodes[node_old]], placement_rule=rel_n)
                     if placement_result == -1:
                         break
                 elif rel_n == "SameShape":
-                    obj_new = self.ObE.random_color(obj_old)
+                    obj_new = self.ObE.random_color(obj_old, rainbow_prob=rainbow_prob)
                     placement_result = test_canvas.placement(obj_new, placement_rule="SameShape", consider_tag=False) # place old obj with free pos
                     if placement_result == -1:
                         break
