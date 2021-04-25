@@ -894,7 +894,10 @@ class Canvas:
                             relation_edges[(oid_right, oid_left)].append("IsTouch")
                         else:             
                             relation_edges[(oid_right, oid_left)] = ["IsTouch"]
-        return relation_edges
+        filtered_relation_edges = OrderedDict({})
+        for k, vs in relation_edges.items():
+            filtered_relation_edges[k] = list(set(vs))
+        return filtered_relation_edges
     
     def change_obj_color(self, oid, new_color):
         curr_obj = self.oid_map[oid]

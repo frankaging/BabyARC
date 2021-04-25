@@ -65,28 +65,36 @@ class OperatorEngine(object):
             self.SELECTORS[selector] = new_patterns
     
     def get_relation_nbrs(self, node, edges):
-        for k, v in edges.items():
+        for k, vs in edges.items():
             if k[0] == node:
-                if v == "Attr":
-                    yield (k[1], v)
+                if vs[0] == "Attr":
+                    yield None, (k[1], vs[0])
                 else:
-                    yield (v,)
+                    for v in vs:
+                        yield k[1], (v,)
 
-    def dfs_path_helper(self, curr_node, curr_path, result, edges, k=3):
+    def dfs_path_helper(self, curr_node, curr_node_path, curr_path, result, edges, k=3):
         if len(curr_path) != 0:
             result.add(tuple(copy.deepcopy(curr_path)))
-        if len(curr_path) == 3:
+        if k == 0:
             return
         
-        for nbr in self.get_relation_nbrs(curr_node, edges):
-            if nbr not in curr_path:
-                curr_path.append(nbr)
-                self.dfs_path_helper(nbr, curr_path, result, edges, k=k)
+        for nbr_node, nbr_rel in self.get_relation_nbrs(curr_node, edges):
+            if nbr_node != None:
+                if nbr_node not in curr_node_path:
+                    curr_node_path.append(nbr_node)
+                    curr_path.append(nbr_rel)
+                    self.dfs_path_helper(nbr_node, curr_node_path, curr_path, result, edges, k=k-1)
+                    curr_path.pop()
+                    curr_node_path.pop()
+            else:
+                curr_path.append(nbr_rel)
+                self.dfs_path_helper(nbr_node, curr_node_path, curr_path, result, edges, k=k-1)
                 curr_path.pop()
         
     def dfs_path(self, root, edges, k=3):
         results = set([])
-        self.dfs_path_helper(root, [], results, edges, k=k)
+        self.dfs_path_helper(root, [root], [], results, edges, k=k)
         return results
     
     def _consolidate_patterns_within_canvas(self, obj_paths):
@@ -111,25 +119,26 @@ class OperatorEngine(object):
                     reversed_patterns[path] = set([obj_i[0]])
         return reversed_patterns
     
-    def get_obj_dfs_path(self, canvas, k=3):
+    def get_obj_dfs_path(self, canvas, depth=3):
+        # These lines can be skipped i think, assuming canvas can parse all relations correctly!
         # extrapolate the relation to be bidirectional for all relations
-        relation_edges = canvas.partial_relation_edges
-        relation_edges_copy = copy.deepcopy(relation_edges)
-        for k, v in relation_edges.items():
-            if v != "Attr" and v != "IsInside": # IsInside is not permutable here!
-                relation_edges_copy[(k[1], k[0])] = v
+        # relation_edges = canvas.partial_relation_edges
+        relation_edges_copy = OrderedDict({})
+        # for k, v in relation_edges.items():
+        #     if v != "Attr" and v != "IsInside": # IsInside is not permutable here!
+        #         relation_edges_copy[(k[1], k[0])] = v
         parsed_relation_edges = canvas.parse_relations()
-        for k, v in parsed_relation_edges.items():
-            if v == "Attr":
-                relation_edges_copy[(canvas.id_node_map[k[0]], k[1])] = v
+        for k, vs in parsed_relation_edges.items():
+            if vs[0] == "Attr": # us the first item to determine the type
+                relation_edges_copy[(canvas.id_node_map[k[0]], k[1])] = vs
             else:
-                relation_edges_copy[(canvas.id_node_map[k[0]], canvas.id_node_map[k[1]])] = v
+                relation_edges_copy[(canvas.id_node_map[k[0]], canvas.id_node_map[k[1]])] = vs
         
         # loop through each obj
         obj_paths = OrderedDict({})
         common_in = None
-        for k, v in canvas.id_node_map.items():
-            v_paths = self.dfs_path(v, relation_edges_copy, k=k)
+        for _, v in canvas.id_node_map.items():
+            v_paths = self.dfs_path(v, relation_edges_copy, k=depth)
             if common_in == None:
                 common_in = v_paths
             else:
@@ -426,7 +435,7 @@ class OperatorEngine(object):
     # Selectors
     #
     ########################################
-    def select_by_common_referred_patterns(self, canvas_list):
+    def select_by_common_referred_patterns(self, canvas_list, frequency_sample=False):
         """
         extract patterns exist 
         """
@@ -450,17 +459,30 @@ class OperatorEngine(object):
                             # common path shared across two canvas
                             new_common_referred[path_common].append(objs_current)
                 common_referred = copy.deepcopy(new_common_referred)
-        selectors = []
-        # return potential selectors as a 2d list, same length as the canvas
-        for _, v in common_referred.items():
-            # we ignore the keys here for significant reasons.
-            # we don't want to explicity expose the relations to 
-            # users.
-            ss = []
-            for e in v:
-                ss += [list(e)]
-            selectors += [ss]
-        return selectors
+        if frequency_sample:
+            selectors = []
+            # return potential selectors as a 2d list, same length as the canvas
+            for _, v in common_referred.items():
+                # we ignore the keys here for significant reasons.
+                # we don't want to explicity expose the relations to 
+                # users.
+                ss = []
+                for e in v:
+                    ss += [list(e)]
+                selectors += [ss]
+        else:
+            selectors = set([])
+            # return potential selectors as a 2d list, same length as the canvas
+            for _, v in common_referred.items():
+                # we ignore the keys here for significant reasons.
+                # we don't want to explicity expose the relations to 
+                # users.
+                ss = []
+                for e in v:
+                    ss.append(tuple(e))
+                ss = tuple(ss)
+                selectors.add(ss)
+        return list(selectors)
 
     def select_by_extreme(self, canvas_list):
         extreme_code = {
