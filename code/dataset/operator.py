@@ -861,7 +861,7 @@ class OperatorEngine(object):
             new_canvas = copy.deepcopy(canvas)
             obj_move_spec = obj_move_specs[canvas_idx]
             sel_obj_idx = 0
-            
+            success = True
             if len(selectors[canvas_idx]) == 2 and len(obj_move_spec) == 1 and obj_move_spec[0].linkage_move:
                 # this is linkage move, we can move two obj together
                 # with certain physical associations
@@ -892,16 +892,13 @@ class OperatorEngine(object):
                         # do we need to handling this???
                         pass
                     new_canvas.opos_map[_id] = new_pos
-                    # check the canvas compliant
-                    if not allow_overlap:
-                        if new_canvas.check_conflict(connect_allow=allow_connect): # this is little hard, but ok?
-                            operated_canvas.append(new_canvas)
-                        else:
-                            break
-                    else:
-                        operated_canvas.append(new_canvas)
                     sel_obj_idx += 1
-                    
+            # check the canvas compliant
+            if not allow_overlap:
+                if not new_canvas.check_conflict(connect_allow=allow_connect): # this is little hard, but ok?
+                    success = False
+                    break
+            operated_canvas.append(new_canvas)
         # return type
         if len(operated_canvas) == len(canvas_list):
             return operated_canvas, operator_tag

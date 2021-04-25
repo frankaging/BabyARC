@@ -163,8 +163,6 @@ class Canvas:
         canvas_r = self.init_canvas.shape[0]
         canvas_c = self.init_canvas.shape[1]
         
-
-        
         if p_r == -1 and p_c == -1:
             random_pos_iter = []
             for i in range((canvas_r-o_r)+1):
