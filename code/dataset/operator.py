@@ -435,7 +435,7 @@ class OperatorEngine(object):
     # Selectors
     #
     ########################################
-    def select_by_common_referred_patterns(self, canvas_list, frequency_sample=False):
+    def select_by_common_referred_patterns(self, canvas_list, frequency_sample=False, debug=False):
         """
         extract patterns exist 
         """
@@ -459,6 +459,8 @@ class OperatorEngine(object):
                             # common path shared across two canvas
                             new_common_referred[path_common].append(objs_current)
                 common_referred = copy.deepcopy(new_common_referred)
+        if debug:
+            print(common_referred)
         if frequency_sample:
             selectors = []
             # return potential selectors as a 2d list, same length as the canvas

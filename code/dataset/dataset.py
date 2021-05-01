@@ -105,11 +105,14 @@ class BabyARCDataset(object):
                     current_obj_count += 1
         return edges
     
-    def sample_single_canvas_by_core_edges(self, edges, is_plot=True, 
-                                           min_length=20, max_length=30, 
-                                           allow_connect=False,
-                                           rainbow_prob=0.2, 
-                                           concept_collection=["line", "Lshape", "rectangle", "rectangleSolid"]):
+    def sample_single_canvas_by_core_edges(
+        self, edges, is_plot=True, 
+        min_length=20, max_length=30, 
+        allow_connect=False,
+        rainbow_prob=0.2, 
+        concept_collection=["line", "Lshape", "rectangle", "rectangleSolid"],
+        parsing_check=False,
+    ):
         relation_num = len(edges)
         nodes = OrderedDict({ })
 
@@ -833,7 +836,13 @@ class BabyARCDataset(object):
             # try to add one noise
             noise_obj = self.ObE.sample_objs(n=1, is_plot=False)[0]
             test_canvas.placement(noise_obj, consider_tag=False)
-            
+        
+        if parsing_check:
+            image_t, _, _ = test_canvas.render(is_plot=False)
+            objs = find_connected_components_colordiff(image_t, is_diag=True, color=True)
+            if len(objs) != len(placed_objs):
+                return -1
+        
         if is_plot:
             test_canvas.render()
             
