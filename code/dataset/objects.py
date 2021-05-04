@@ -554,19 +554,19 @@ class ObjectEngine:
             if select_boundary == 0:
                 # |
                 pos_r = random.randint(0, h-cover_h)
-                img_t[pos_r:pos_r+cover_w, 0:cover_h] = 0
+                img_t[pos_r:pos_r+cover_h, 0:cover_w] = 0
             elif select_boundary == 1:
                 # -
                 pos_c = random.randint(0, w-cover_w)
-                img_t[0:cover_w, pos_c:pos_c+cover_h] = 0
+                img_t[0:cover_h, pos_c:pos_c+cover_w] = 0
             elif select_boundary == 2:
                 #  |
                 pos_r = random.randint(0, h-cover_h)
-                img_t[pos_r:pos_r+cover_w, -cover_h:] = 0
+                img_t[pos_r:pos_r+cover_h, -cover_w:] = 0
             elif select_boundary == 3:
                 # _
                 pos_c = random.randint(0, w-cover_w)
-                img_t[-cover_w:, pos_c:pos_c+cover_h] = 0
+                img_t[-cover_h:, pos_c:pos_c+cover_w] = 0
 
             # color
             new_obj = Object(img_t, position_tags=[])

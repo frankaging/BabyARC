@@ -204,6 +204,25 @@ class BabyARCDataset(object):
                                                                  connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
                             break
+                    elif node_right.startswith("randomShape"):
+                        rect_spec = node_right.split("_")[-1]
+                        rect_spec = ast.literal_eval(rect_spec)
+                        if rect_spec[0] != -1:
+                            w_lims = [rect_spec[0], rect_spec[0]]
+                        else:
+                            w_lims = [2, test_canvas.init_canvas.shape[1]-1]
+                        if rect_spec[1] != -1:
+                            h_lims = [rect_spec[1], rect_spec[1]]
+                        else:
+                            h_lims = [2, test_canvas.init_canvas.shape[0]-1]    
+                        obj_refer = self.ObE.sample_objs_with_random_shape(
+                            n=1, w_lims=w_lims, h_lims=h_lims, 
+                            rainbow_prob=rainbow_prob
+                        )[0]
+                        placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
+                                                                 connect_allow=allow_connect) # place old obj with free pos
+                        if placement_result == -1:
+                            break
                     elif node_right.startswith("rectangleSolid"):
                         rect_spec = node_right.split("_")[-1]
                         rect_spec = ast.literal_eval(rect_spec)
