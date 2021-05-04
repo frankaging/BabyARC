@@ -534,6 +534,49 @@ class ObjectEngine:
                 objs_sampled.append(self.random_color_rainbow(new_obj))
         return objs_sampled
     
+    def sample_objs_with_random_shape(
+        self, n=1, w_lims=[4,4], h_lims=[4,4], 
+        rainbow_prob=0.2
+    ):
+        objs_sampled = []
+        for i in range(n):
+            w = random.randint(w_lims[0], w_lims[1])
+            h = random.randint(h_lims[0], h_lims[1])
+
+            img_t = torch.ones(h, w)
+            
+            # Randomly remove pixels by overlapping a cover
+            cover_w = random.randint(1, w-1)
+            cover_h = random.randint(1, h-1)
+            
+            # attaching boundary
+            select_boundary = random.randint(0,3)
+            if select_boundary == 0:
+                # |
+                pos_r = random.randint(0, h-cover_h)
+                img_t[pos_r:pos_r+cover_w, 0:cover_h] = 0
+            elif select_boundary == 1:
+                # -
+                pos_c = random.randint(0, w-cover_w)
+                img_t[0:cover_w, pos_c:pos_c+cover_h] = 0
+            elif select_boundary == 2:
+                #  |
+                pos_r = random.randint(0, h-cover_h)
+                img_t[pos_r:pos_r+cover_w, -cover_h:] = 0
+            elif select_boundary == 3:
+                # _
+                pos_c = random.randint(0, w-cover_w)
+                img_t[-cover_w:, pos_c:pos_c+cover_h] = 0
+
+            # color
+            new_obj = Object(img_t, position_tags=[])
+
+            if random.random() <= 1-rainbow_prob:
+                objs_sampled.append(self.random_color(new_obj, rainbow_prob=rainbow_prob))
+            else:
+                objs_sampled.append(self.random_color_rainbow(new_obj))
+        return objs_sampled
+    
     def sample_objs_with_rectangle(self, n=1, w_lims=[5,10], h_lims=[5,10], thickness=1, 
                                    rainbow_prob=0.2):
         
