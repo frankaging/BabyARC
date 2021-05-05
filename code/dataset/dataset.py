@@ -110,7 +110,7 @@ class BabyARCDataset(object):
         min_length=20, max_length=30, 
         allow_connect=False,
         rainbow_prob=0.2, 
-        concept_collection=["line", "Lshape", "rectangle", "rectangleSolid"],
+        concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape"],
         parsing_check=False,
     ):
         relation_num = len(edges)
@@ -655,7 +655,8 @@ class BabyARCDataset(object):
                     for _ in range(amortize_retry):
                         obj_refer = self.ObE.sample_objs_by_bound_area(
                             n=1, rainbow_prob=rainbow_prob, 
-                            w_lim=w_lim, h_lim=h_lim
+                            w_lim=w_lim, h_lim=h_lim,
+                            concept_collection=concept_collection
                         )[0]
                         placement_result = test_canvas.placement(
                             obj_refer, to_relate_objs=[nodes[node_left]], 
@@ -734,7 +735,11 @@ class BabyARCDataset(object):
                     for _ in range(amortize_retry):
                         new_c = test_canvas.unify_color(nodes[node_left])
                         # random get an object
-                        obj_refer = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                        obj_refer = self.ObE.sample_objs_by_bound_area(
+                            n=1, rainbow_prob=rainbow_prob, 
+                            w_lim=w_lim, h_lim=h_lim,
+                            concept_collection=concept_collection
+                        )[0]
                         obj_refer = self.ObE.fix_color(obj_refer, new_color=new_c)
                         placement_result = test_canvas.placement(
                             obj_refer, placement_rule="SameColor", 

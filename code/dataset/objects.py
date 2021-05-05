@@ -174,7 +174,7 @@ class ObjectEngine:
     
     def sample_objs_by_bound_area(self, n=1, w_lim=5, h_lim=5, random_generated=True, 
                                   rainbow_prob=0.2, 
-                                  concept_collection=["line", "Lshape", "rectangle", "rectangleSolid"]):
+                                  concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape"]):
         """
         sample object within the width and height limits.
         if there is no such object in the pool, the engine
@@ -183,7 +183,7 @@ class ObjectEngine:
         objs_sampled = []
         for i in range(n):
             chosen_shape = np.random.choice(concept_collection)
-            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid"}:
+            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape"}:
                 if chosen_shape == "line":
                     direction = random.randint(0,1)
                     if direction == 0:
@@ -210,6 +210,14 @@ class ObjectEngine:
                 elif chosen_shape == "rectangleSolid":
                     obj = self.sample_objs_with_rectangle_solid(
                         n=1, w_lims=[2,w_lim], h_lims=[2,h_lim], 
+                        rainbow_prob=rainbow_prob
+                    )[0]
+                elif chosen_shape == "randomShape":
+                    # Special bounds.
+                    w = random.randint(2,4)
+                    h = random.randint(2,4)
+                    obj = self.sample_objs_with_random_shape(
+                        n=1, w_lims=[w,w], h_lims=[h,h], 
                         rainbow_prob=rainbow_prob
                     )[0]
                 objs_sampled.append(obj)
@@ -249,7 +257,7 @@ class ObjectEngine:
 
     def sample_objs_by_fixed_width(self, n=1, width=5, h_lim=5, 
                                    random_generated=True, rainbow_prob=0.2, 
-                                   concept_collection=["line", "Lshape", "rectangle", "rectangleSolid"]):
+                                   concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape"]):
         """
         sample object within the width and height limits.
         if there is no such object in the pool, the engine
@@ -258,7 +266,7 @@ class ObjectEngine:
         objs_sampled = []
         for i in range(n):
             chosen_shape = np.random.choice(concept_collection)
-            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid"}:
+            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape"}:
                 if chosen_shape == "line":
                     direction = 1
                     len_lims=[width,width]
@@ -282,6 +290,11 @@ class ObjectEngine:
                 elif chosen_shape == "rectangleSolid":
                     obj = self.sample_objs_with_rectangle_solid(
                         n=1, w_lims=[width,width], h_lims=[2,h_lim], 
+                        rainbow_prob=rainbow_prob
+                    )[0]
+                elif chosen_shape == "randomShape":
+                    obj = self.sample_objs_with_random_shape(
+                        n=1, w_lims=[width,width], h_lims=[2,4], 
                         rainbow_prob=rainbow_prob
                     )[0]
                 objs_sampled.append(obj)
@@ -319,7 +332,7 @@ class ObjectEngine:
     
     def sample_objs_by_fixed_height(self, n=1, height=5, w_lim=5, 
                                     random_generated=True, rainbow_prob=0.2, 
-                                    concept_collection=["line", "Lshape", "rectangle", "rectangleSolid"]):
+                                    concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape"]):
         """
         sample object within the width and height limits.
         if there is no such object in the pool, the engine
@@ -328,7 +341,7 @@ class ObjectEngine:
         objs_sampled = []
         for i in range(n):
             chosen_shape = np.random.choice(concept_collection)
-            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid"}:
+            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape"}:
                 if chosen_shape == "line":
                     direction = 0
                     len_lims=[height,height]
@@ -352,6 +365,11 @@ class ObjectEngine:
                 elif chosen_shape == "rectangleSolid":
                     obj = self.sample_objs_with_rectangle_solid(
                         n=1, w_lims=[2,w_lim], h_lims=[height,height], 
+                        rainbow_prob=rainbow_prob
+                    )[0]
+                elif chosen_shape == "randomShape":
+                    obj = self.sample_objs_with_random_shape(
+                        n=1, w_lims=[2,4], h_lims=[height,height], 
                         rainbow_prob=rainbow_prob
                     )[0]
                 objs_sampled.append(obj)
