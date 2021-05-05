@@ -533,8 +533,8 @@ class ObjectEngine:
             else:
                 objs_sampled.append(self.random_color_rainbow(new_obj))
         return objs_sampled
-    
-    def sample_objs_with_random_shape(
+
+    def sample_objs_with_random_rectangle(
         self, n=1, w_lims=[4,4], h_lims=[4,4], 
         rainbow_prob=0.2
     ):
@@ -567,6 +567,59 @@ class ObjectEngine:
                 # _
                 pos_c = random.randint(0, w-cover_w)
                 img_t[-cover_h:, pos_c:pos_c+cover_w] = 0
+
+            # color
+            new_obj = Object(img_t, position_tags=[])
+
+            if random.random() <= 1-rainbow_prob:
+                objs_sampled.append(self.random_color(new_obj, rainbow_prob=rainbow_prob))
+            else:
+                objs_sampled.append(self.random_color_rainbow(new_obj))
+        return objs_sampled
+    
+    def sample_objs_with_random_shape(
+        self, n=1, w_lims=[4,4], h_lims=[4,4], 
+        rainbow_prob=0.2
+    ):
+        objs_sampled = []
+        for i in range(n):
+            
+            disconnected = True
+            while disconnected:
+
+                w = random.randint(w_lims[0], w_lims[1])
+                h = random.randint(h_lims[0], h_lims[1])
+
+                img_t = torch.randint(0, 2, (h, w)) # random bitmap 
+
+                # check if this is valid, if yet, set the flag and add into the return list
+                n_objs = find_connected_components(img_t, is_diag=True)
+                n_objs = len(n_objs)
+                if n_objs == 1:
+                    # let us see, if we can shrink the size, if yes, not statisfied!
+                    up_check = False
+                    for i in range(w):
+                        if img_t[0, i] != 0:
+                            up_check = True
+                            break
+                    down_check = False
+                    for i in range(w):
+                        if img_t[-1, i] != 0:
+                            down_check = True
+                            break
+                    
+                    left_check = False
+                    for i in range(h):
+                        if img_t[i, 0] != 0:
+                            left_check = True
+                            break
+                    right_check = False
+                    for i in range(h):
+                        if img_t[i, -1] != 0:
+                            right_check = True
+                            break
+                    if up_check and down_check and left_check and right_check:
+                        disconnected = False # find!
 
             # color
             new_obj = Object(img_t, position_tags=[])
