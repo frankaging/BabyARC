@@ -40,26 +40,31 @@ class BabyARCDataset(object):
     TODO:
     1. Support different background color.
     """
-    def __init__(self, pretrained_obj_cache, 
-                 data_dir=None, save_directory="./BabyARCDataset/", 
-                 object_limit=None,
-                 # below are basic statistics of the dataset
-                 dataset_background_color=0.0,
-                 relation_vocab = ["SameAll", "SameShape", "SameColor", 
-                                   "SameRow", "SameCol", 
-                                   "IsInside", "IsTouch"],
-                 num_pool = [2,3,4],
-                 sparse_prob = 0.3,
-                 noise_level = 1, 
-                 canvas_size = None): # if canvas size is provided, square shape canvas is sampled.
+    def __init__(
+        self, pretrained_obj_cache, 
+        data_dir=None, save_directory="./BabyARCDataset/", 
+        object_limit=None,
+        # below are basic statistics of the dataset
+        dataset_background_color=0.0,
+        relation_vocab = ["SameAll", "SameShape", "SameColor", 
+                          "SameRow", "SameCol", 
+                          "IsInside", "IsTouch"],
+        num_pool = [2,3,4],
+        sparse_prob = 0.3,
+        noise_level = 1, 
+        canvas_size = None,
+        debug = False,
+    ): # if canvas size is provided, square shape canvas is sampled.
         if data_dir == None:
-            logger.info("Creating new BabyARC dataset by loading in pretrained objects.")
             self.training_objs = torch.load(pretrained_obj_cache)
-            logger.info(f"Loading the object engine and canvas engine with "
-                        f"a limit of object number {object_limit}, "
-                        f"background_color={int(dataset_background_color)}.")
+            if debug:
+                logger.info("Creating new BabyARC dataset by loading in pretrained objects.")
+                logger.info(f"Loading the object engine and canvas engine with "
+                            f"a limit of object number {object_limit}, "
+                            f"background_color={int(dataset_background_color)}.")
             if object_limit == 0:
-                logger.info("WARNING: 0 object requested from pretrained objects file. Overwrite to 1 for safety.")
+                if debug:
+                    logger.info("WARNING: 0 object requested from pretrained objects file. Overwrite to 1 for safety.")
                 object_limit = 1 # overwrite to 1 for simplicity
             if object_limit:
                 self.ObE = ObjectEngine(self.training_objs[:object_limit], 
@@ -76,7 +81,8 @@ class BabyARCDataset(object):
         self.data_dir = data_dir # if it is None, we need to generate new dataset
         self.save_directory = save_directory
         if canvas_size:
-            logger.info(f"Create BabyARC canvas with fixed width and height = {canvas_size}.")
+            if debug:
+                logger.info(f"Create BabyARC canvas with fixed width and height = {canvas_size}.")
         self.canvas_size = canvas_size
     
     def sample_single_core_edges(self):

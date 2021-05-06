@@ -61,7 +61,7 @@ class ObjectEngine:
     objects in different way such as changing colors,
     rotating objects, etc..
     """
-    def __init__(self, obj_pool=[], background_c=0.0):
+    def __init__(self, obj_pool=[], background_c=0.0, debug=False):
         self.md5_obj = {}
         self.md5_freq = {}
         self.color_dict = {0: [0, 0, 0],
@@ -75,7 +75,7 @@ class ObjectEngine:
                           8: [0, 1, 1],
                           9: [.64, .16, .16],
                          }
-        self.obj_pool = self._iso_obj_pool(obj_pool)
+        self.obj_pool = self._iso_obj_pool(obj_pool, debug=debug)
         self.background_c = background_c
     
     def plot_objs(self, img_objs):
@@ -149,11 +149,12 @@ class ObjectEngine:
             torch.rot90(img_t, k=1, dims=(-2, -1)).flip(-2)
         ]
     
-    def _iso_obj_pool(self, obj_pool):
+    def _iso_obj_pool(self, obj_pool, debug=False):
         """
         we will shrink the object pool for iso objects.
         """
-        logger.info(f"Original obj count = {len(obj_pool)}")
+        if debug:
+            logger.info(f"Original obj count = {len(obj_pool)}")
         shrink_obj_pool = []
         for obj in obj_pool:
             img_variant = self._img_variant(obj.image_t)
@@ -169,7 +170,8 @@ class ObjectEngine:
                 self.md5_obj[key_md5] = obj
                 shrink_obj_pool.append(obj)
                 self.md5_freq[key_md5] = 1
-        logger.info(f"Iso obj count = {len(shrink_obj_pool)}")
+        if debug:
+            logger.info(f"Iso obj count = {len(shrink_obj_pool)}")
         return shrink_obj_pool
     
     def sample_objs_by_bound_area(self, n=1, w_lim=5, h_lim=5, random_generated=True, 
