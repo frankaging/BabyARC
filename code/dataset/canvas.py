@@ -116,6 +116,18 @@ class Canvas:
     def unify_color(self, oid):
         # unify the color of an object, this is useful in creating SameColor relations
         current_obj = self.oid_map[oid]
+        unique = current_obj.image_t.unique().tolist()
+        
+        if len(unique) == 2:
+            if unique[0] == 0:
+                return int(unique[1])
+            elif unique[1] == 0:
+                return int(unique[0])
+            else:
+                pass
+        elif len(unique) == 1:
+            return int(unique[0])
+
         new_c = randint_exclude(0,9,[self.background_color])
         for i in range(current_obj.image_t.shape[0]):
             for j in range(current_obj.image_t.shape[1]):

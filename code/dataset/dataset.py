@@ -118,6 +118,7 @@ class BabyARCDataset(object):
         rainbow_prob=0.2, 
         concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape"],
         parsing_check=False,
+        color_avail=None,
     ):
         relation_num = len(edges)
         nodes = OrderedDict({ })
@@ -189,6 +190,9 @@ class BabyARCDataset(object):
                                                                   thickness=thickness, 
                                                                   direction=direction,
                                                                   rainbow_prob=rainbow_prob)[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
                                                                  connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
@@ -206,6 +210,9 @@ class BabyARCDataset(object):
                             h_lims = [2, test_canvas.init_canvas.shape[0]-1]    
                         obj_refer = self.ObE.sample_objs_with_rectangle(n=1, w_lims=w_lims, h_lims=h_lims, 
                                                                          thickness=1, rainbow_prob=rainbow_prob)[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
                                                                  connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
@@ -225,6 +232,9 @@ class BabyARCDataset(object):
                             n=1, w_lims=w_lims, h_lims=h_lims, 
                             rainbow_prob=rainbow_prob
                         )[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
                                                                  connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
@@ -244,6 +254,9 @@ class BabyARCDataset(object):
                             n=1, w_lims=w_lims, h_lims=h_lims,
                             rainbow_prob=rainbow_prob
                         )[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
                                                                  connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
@@ -269,6 +282,9 @@ class BabyARCDataset(object):
                         obj_refer = self.ObE.sample_objs_with_l_shape(n=1, w_lims=w_lims, h_lims=h_lims, 
                                                                       thickness=1, rainbow_prob=rainbow_prob, 
                                                                       direction=direction)[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
                                                                  connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
@@ -289,6 +305,9 @@ class BabyARCDataset(object):
                         obj_refer = self.ObE.sample_objs_with_symmetry_shape(
                             n=1, w_lims=w_lims, h_lims=h_lims,
                             rainbow_prob=rainbow_prob, axis_list=axis_spec)[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
                                                                  connect_allow=allow_connect) # place old obj with free pos
                         if placement_result == -1:
@@ -314,6 +333,9 @@ class BabyARCDataset(object):
                         obj_refer = self.ObE.sample_objs_with_enclosure(n=1, w_lims=w_lims, h_lims=h_lims, 
                                                                    thickness=1, rainbow_prob=rainbow_prob, 
                                                                    gravity=gravity)[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False) # place old obj with free pos
                         if placement_result == -1:
                             break
@@ -326,6 +348,9 @@ class BabyARCDataset(object):
                         else:
                             boundary = boundary_spec[0]
                         obj_refer = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         canvas_w = test_canvas.init_canvas.shape[0]
                         canvas_h = test_canvas.init_canvas.shape[1]
                         if boundary == 0:
@@ -505,7 +530,9 @@ class BabyARCDataset(object):
                         n=1, thickness=1, rainbow_prob=rainbow_prob,
                         w_lims=w_lims, h_lims=h_lims
                     )[0] 
-                    
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        out_obj = self.ObE.fix_color(out_obj, random.choice(color_avail))
                     placement_result = test_canvas.placement(out_obj)
                     if placement_result == -1:
                         break
@@ -516,6 +543,9 @@ class BabyARCDataset(object):
                         w_lim=out_obj.image_t.shape[1]-2, h_lim=out_obj.image_t.shape[0]-2,
                         concept_collection=concept_collection
                     )[0]
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        in_obj = self.ObE.fix_color(in_obj, random.choice(color_avail))
                     placement_result = test_canvas.placement(
                         in_obj, to_relate_objs=[nodes[node_right]], 
                         placement_rule="IsInside", connect_allow=allow_connect
@@ -541,6 +571,9 @@ class BabyARCDataset(object):
                         w_lim=w_lim, h_lim=h_lim,
                         concept_collection=concept_collection
                     )[0]
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        obj_new = self.ObE.fix_color(obj_new, random.choice(color_avail))
                     obj_new_copy = copy.deepcopy(obj_new)
                     placement_result = test_canvas.placement(obj_new)
                     if placement_result == -1:
@@ -568,6 +601,9 @@ class BabyARCDataset(object):
                         w_lim=w_lim, h_lim=h_lim,
                         concept_collection=concept_collection
                     )[0]
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        obj_anchor = self.ObE.fix_color(obj_anchor, random.choice(color_avail))
                     placement_result = test_canvas.placement(obj_anchor)
                     if placement_result == -1:
                         break
@@ -582,6 +618,9 @@ class BabyARCDataset(object):
                             height=obj_anchor.image_t.shape[0], w_lim=w_lim, 
                             concept_collection=concept_collection
                         )[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         placement_result = test_canvas.placement(
                             obj_refer, to_relate_objs=[nodes[node_left]], 
                             placement_rule=rel_n, 
@@ -610,6 +649,9 @@ class BabyARCDataset(object):
                         w_lim=w_lim, h_lim=h_lim,
                         concept_collection=concept_collection
                     )[0]
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        obj_anchor = self.ObE.fix_color(obj_anchor, random.choice(color_avail))
                     placement_result = test_canvas.placement(obj_anchor)
                     if placement_result == -1:
                         break
@@ -623,6 +665,9 @@ class BabyARCDataset(object):
                             width=obj_anchor.image_t.shape[1], h_lim=h_lim, 
                             concept_collection=concept_collection
                         )[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         placement_result = test_canvas.placement(
                             obj_refer, to_relate_objs=[nodes[node_left]], 
                             placement_rule=rel_n, 
@@ -650,6 +695,9 @@ class BabyARCDataset(object):
                         w_lim=w_lim, h_lim=h_lim,
                         concept_collection=concept_collection
                     )[0]
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        obj_anchor = self.ObE.fix_color(obj_anchor, random.choice(color_avail))
                     placement_result = test_canvas.placement(obj_anchor)
                     if placement_result == -1:
                         break
@@ -664,6 +712,9 @@ class BabyARCDataset(object):
                             w_lim=w_lim, h_lim=h_lim,
                             concept_collection=concept_collection
                         )[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         placement_result = test_canvas.placement(
                             obj_refer, to_relate_objs=[nodes[node_left]], 
                             placement_rule=rel_n, 
@@ -691,6 +742,9 @@ class BabyARCDataset(object):
                         w_lim=w_lim, h_lim=h_lim,
                         concept_collection=concept_collection
                     )[0]
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        obj_anchor = self.ObE.fix_color(obj_anchor, random.choice(color_avail))
                     placement_result = test_canvas.placement(obj_anchor)
                     if placement_result == -1:
                         break
@@ -703,6 +757,9 @@ class BabyARCDataset(object):
                         obj_refer = self.ObE.random_color(
                             obj_anchor, rainbow_prob=rainbow_prob
                         )
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         placement_result = test_canvas.placement(
                             obj_refer, placement_rule="SameShape", 
                             consider_tag=False, 
@@ -731,6 +788,9 @@ class BabyARCDataset(object):
                         w_lim=w_lim, h_lim=h_lim,
                         concept_collection=concept_collection
                     )[0]
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        obj_anchor = self.ObE.fix_color(obj_anchor, random.choice(color_avail))
                     placement_result = test_canvas.placement(obj_anchor)
                     if placement_result == -1:
                         break
@@ -773,6 +833,9 @@ class BabyARCDataset(object):
                         # the new obj is the inside obj
                         in_obj = self.ObE.sample_objs_by_bound_area(n=1, rainbow_prob=rainbow_prob, 
                                                                w_lim=3, h_lim=3)[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            in_obj = self.ObE.fix_color(in_obj, random.choice(color_avail))
                         placement_result = test_canvas.placement(
                             in_obj, 
                             to_relate_objs=[nodes[node_old]], 
@@ -784,6 +847,9 @@ class BabyARCDataset(object):
                         # this is to place the object inside referring to the outside object
                         out_obj = self.ObE.sample_objs_with_rectangle(n=1, thickness=1, rainbow_prob=rainbow_prob, 
                                                                   w_lims=[8,10], h_lims=[8,10])[0] 
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            out_obj = self.ObE.fix_color(out_obj, random.choice(color_avail))
                         placement_result = test_canvas.placement(
                             out_obj, 
                             to_relate_objs=[nodes[node_old]], 
@@ -805,6 +871,9 @@ class BabyARCDataset(object):
                     # we need to actually make sure height is the same
                     height_old = obj_old.image_t.shape[0]
                     in_obj = self.ObE.sample_objs_by_fixed_height(n=1, rainbow_prob=rainbow_prob, height=height_old, w_lim=5)[0]
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        in_obj = self.ObE.fix_color(in_obj, random.choice(color_avail))
                     placement_result = test_canvas.placement(
                         in_obj, 
                         to_relate_objs=[nodes[node_old]], 
@@ -815,6 +884,9 @@ class BabyARCDataset(object):
                     # we need to actually make sure width
                     width_old = obj_old.image_t.shape[1]
                     in_obj = self.ObE.sample_objs_by_fixed_width(n=1, rainbow_prob=rainbow_prob, width=width_old, h_lim=5)[0]
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        in_obj = self.ObE.fix_color(in_obj, random.choice(color_avail))
                     placement_result = test_canvas.placement(
                         in_obj, 
                         to_relate_objs=[nodes[node_old]], 
@@ -824,6 +896,9 @@ class BabyARCDataset(object):
                 elif rel_n == "IsTouch":
                     in_obj = self.ObE.sample_objs_by_bound_area(n=1, rainbow_prob=rainbow_prob, 
                                                            w_lim=3, h_lim=3)[0]
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        in_obj = self.ObE.fix_color(in_obj, random.choice(color_avail))
                     placement_result = test_canvas.placement(
                         in_obj, 
                         to_relate_objs=[nodes[node_old]], 
@@ -834,6 +909,9 @@ class BabyARCDataset(object):
                         break
                 elif rel_n == "SameShape":
                     obj_new = self.ObE.random_color(obj_old, rainbow_prob=rainbow_prob)
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        in_obj = self.ObE.fix_color(in_obj, random.choice(color_avail))
                     placement_result = test_canvas.placement(
                         obj_new, 
                         placement_rule="SameShape", 
