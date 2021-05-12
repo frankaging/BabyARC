@@ -174,9 +174,11 @@ class ObjectEngine:
             logger.info(f"Iso obj count = {len(shrink_obj_pool)}")
         return shrink_obj_pool
     
-    def sample_objs_by_bound_area(self, n=1, w_lim=5, h_lim=5, random_generated=True, 
-                                  rainbow_prob=0.2, 
-                                  concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape"]):
+    def sample_objs_by_bound_area(
+        self, n=1, w_lim=5, h_lim=5, random_generated=True, 
+        rainbow_prob=0.2, 
+        concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"]
+    ):
         """
         sample object within the width and height limits.
         if there is no such object in the pool, the engine
@@ -185,7 +187,7 @@ class ObjectEngine:
         objs_sampled = []
         for i in range(n):
             chosen_shape = np.random.choice(concept_collection)
-            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape"}:
+            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"}:
                 if chosen_shape == "line":
                     direction = random.randint(0,1)
                     if direction == 0:
@@ -222,7 +224,28 @@ class ObjectEngine:
                         n=1, w_lims=[w,w], h_lims=[h,h], 
                         rainbow_prob=rainbow_prob
                     )[0]
-                objs_sampled.append(obj)
+                elif chosen_shape == "arcShape":
+                    # Minimum we sample a random shape.
+                    obj_sub_pool = []
+                    shuffle_pool = copy.deepcopy(self.obj_pool)
+                    random.shuffle(shuffle_pool)
+                    obj = None
+                    # Here we simply go through the object pool and sample arc object!
+                    for arc_obj in shuffle_pool:
+                        obj_img_t = arc_obj.image_t
+                        if obj_img_t.shape[0] <= h_lim and \
+                            obj_img_t.shape[1] <= w_lim and \
+                            obj_img_t.shape[0] >= 2 and \
+                            obj_img_t.shape[1] >= 2:
+                            # we add in a random rotated version of objs.
+                            obj = self.random_rotation(
+                                self.fix_color(
+                                    arc_obj, random.randint(1,9)
+                                )
+                            )
+                            obj.position_tags = []
+                if obj != None:
+                    objs_sampled.append(obj)
             else:
                 for i in range(n):
                     for obj in self.obj_pool:
@@ -257,9 +280,11 @@ class ObjectEngine:
 
         return objs_sampled
 
-    def sample_objs_by_fixed_width(self, n=1, width=5, h_lim=5, 
-                                   random_generated=True, rainbow_prob=0.2, 
-                                   concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape"]):
+    def sample_objs_by_fixed_width(
+        self, n=1, width=5, h_lim=5, 
+        random_generated=True, rainbow_prob=0.2, 
+        concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"]
+    ):
         """
         sample object within the width and height limits.
         if there is no such object in the pool, the engine
@@ -268,7 +293,7 @@ class ObjectEngine:
         objs_sampled = []
         for i in range(n):
             chosen_shape = np.random.choice(concept_collection)
-            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape"}:
+            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"}:
                 if chosen_shape == "line":
                     direction = 1
                     len_lims=[width,width]
@@ -299,6 +324,25 @@ class ObjectEngine:
                         n=1, w_lims=[width,width], h_lims=[2,4], 
                         rainbow_prob=rainbow_prob
                     )[0]
+                elif chosen_shape == "arcShape":
+                    # Minimum we sample a random shape.
+                    obj_sub_pool = []
+                    shuffle_pool = copy.deepcopy(self.obj_pool)
+                    random.shuffle(shuffle_pool)
+                    obj = None
+                    # Here we simply go through the object pool and sample arc object!
+                    for arc_obj in shuffle_pool:
+                        obj_img_t = arc_obj.image_t
+                        if obj_img_t.shape[0] <= h_lim and \
+                            obj_img_t.shape[1] == width and \
+                            obj_img_t.shape[0] >= 2 and \
+                            obj_img_t.shape[1] >= 2:
+                            # we add in a random rotated version of objs.
+                            obj = self.fix_color(
+                                    arc_obj, random.randint(1,9)
+                                )
+                            obj.position_tags = []
+                    
                 objs_sampled.append(obj)
             else:
                 for obj in self.obj_pool:
@@ -332,9 +376,11 @@ class ObjectEngine:
 
         return objs_sampled
     
-    def sample_objs_by_fixed_height(self, n=1, height=5, w_lim=5, 
-                                    random_generated=True, rainbow_prob=0.2, 
-                                    concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape"]):
+    def sample_objs_by_fixed_height(
+        self, n=1, height=5, w_lim=5, 
+        random_generated=True, rainbow_prob=0.2, 
+        concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"]
+    ):
         """
         sample object within the width and height limits.
         if there is no such object in the pool, the engine
@@ -343,7 +389,7 @@ class ObjectEngine:
         objs_sampled = []
         for i in range(n):
             chosen_shape = np.random.choice(concept_collection)
-            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape"}:
+            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"}:
                 if chosen_shape == "line":
                     direction = 0
                     len_lims=[height,height]
@@ -374,6 +420,25 @@ class ObjectEngine:
                         n=1, w_lims=[2,4], h_lims=[height,height], 
                         rainbow_prob=rainbow_prob
                     )[0]
+                elif chosen_shape == "arcShape":
+                    # Minimum we sample a random shape.
+                    obj_sub_pool = []
+                    shuffle_pool = copy.deepcopy(self.obj_pool)
+                    random.shuffle(shuffle_pool)
+                    obj = None
+                    # Here we simply go through the object pool and sample arc object!
+                    for arc_obj in shuffle_pool:
+                        obj_img_t = arc_obj.image_t
+                        if obj_img_t.shape[0] == height and \
+                            obj_img_t.shape[1] <= w_lim and \
+                            obj_img_t.shape[0] >= 2 and \
+                            obj_img_t.shape[1] >= 2:
+                            # we add in a random rotated version of objs.
+                            obj = self.fix_color(
+                                    arc_obj, random.randint(1,9)
+                                )
+                            obj.position_tags = []
+                    
                 objs_sampled.append(obj)
             else:
                 for obj in self.obj_pool:
@@ -554,6 +619,12 @@ class ObjectEngine:
                 objs_sampled.append(self.random_color_rainbow(new_obj))
         return objs_sampled
 
+    def sample_objs_with_arc(
+        self, n=1, w_lims=[4,4], h_lims=[4,4], 
+        rainbow_prob=0.2
+    ):
+        pass
+    
     def sample_objs_with_random_rectangle(
         self, n=1, w_lims=[4,4], h_lims=[4,4], 
         rainbow_prob=0.2
