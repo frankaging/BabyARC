@@ -911,7 +911,7 @@ class BabyARCDataset(object):
                         # the new obj is the outside obj
                         # this is to place the object inside referring to the outside object
                         out_obj = self.ObE.sample_objs_with_rectangle(n=1, thickness=1, rainbow_prob=rainbow_prob, 
-                                                                  w_lims=[8,10], h_lims=[8,10])[0] 
+                                                                  w_lims=[3,8], h_lims=[3,8])[0] 
                         if color_avail:
                             # We can sample color now based on color collection.
                             out_obj = self.ObE.fix_color(out_obj, random.choice(color_avail))
@@ -921,6 +921,7 @@ class BabyARCDataset(object):
                             placement_rule="IsOutside", 
                             connect_allow=allow_connect
                         )
+                        print(placement_result)
                     if placement_result == -1:
                         break
                 elif rel_n == "SameAll":
