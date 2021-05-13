@@ -187,6 +187,7 @@ class ObjectEngine:
         objs_sampled = []
         for i in range(n):
             chosen_shape = np.random.choice(concept_collection)
+
             if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"}:
                 if chosen_shape == "line":
                     direction = random.randint(0,1)
@@ -230,8 +231,10 @@ class ObjectEngine:
                     shuffle_pool = copy.deepcopy(self.obj_pool)
                     random.shuffle(shuffle_pool)
                     obj = None
+                    
                     # Here we simply go through the object pool and sample arc object!
                     for arc_obj in shuffle_pool:
+
                         obj_img_t = arc_obj.image_t
                         if obj_img_t.shape[0] <= h_lim and \
                             obj_img_t.shape[1] <= w_lim and \
@@ -244,8 +247,8 @@ class ObjectEngine:
                                 )
                             )
                             obj.position_tags = []
-                if obj != None:
-                    objs_sampled.append(obj)
+                            break
+                objs_sampled.append(obj)
             else:
                 for i in range(n):
                     for obj in self.obj_pool:
@@ -342,7 +345,7 @@ class ObjectEngine:
                                     arc_obj, random.randint(1,9)
                                 )
                             obj.position_tags = []
-                    
+                            break
                 objs_sampled.append(obj)
             else:
                 for obj in self.obj_pool:
@@ -438,7 +441,7 @@ class ObjectEngine:
                                     arc_obj, random.randint(1,9)
                                 )
                             obj.position_tags = []
-                    
+                            break
                 objs_sampled.append(obj)
             else:
                 for obj in self.obj_pool:
