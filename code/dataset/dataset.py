@@ -948,6 +948,8 @@ class BabyARCDataset(object):
                         placement_rule=rel_n, 
                         connect_allow=allow_connect
                     )
+                    if placement_result == -1:
+                        break
                 elif rel_n == "SameCol":
                     # we need to actually make sure width
                     width_old = obj_old.image_t.shape[1]
@@ -964,6 +966,8 @@ class BabyARCDataset(object):
                         placement_rule=rel_n,
                         connect_allow=allow_connect
                     )
+                    if placement_result == -1:
+                        break
                 elif rel_n == "IsTouch":
                     in_obj = self.ObE.sample_objs_by_bound_area(n=1, rainbow_prob=rainbow_prob, 
                                                            w_lim=3, h_lim=3)[0]

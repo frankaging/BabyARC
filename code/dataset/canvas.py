@@ -748,10 +748,27 @@ class Canvas:
 
             repre["background_color"] = self.background_color
             repre["node_id_map"] = nodes
-
+            node_id_reverse = {}
+            for k, v in repre["node_id_map"].items():
+                node_id_reverse[v] = k
             # we note this as partial as we don't
             # provide a full parse of relation
             repre["partial_relation_edges"] = edges
+            # Let us also add in more relations.
+            complete_edges = self.parse_relations()
+
+            updated_relation_edges = OrderedDict({ })
+            for k, v in complete_edges.items():
+                if v == "Attr" or (isinstance(v, list) and v[0] == "Attr"):
+                    pass
+                else:
+                    new_k = (node_id_reverse[k[0]], node_id_reverse[k[1]])
+                    updated_relation_edges[new_k] = v
+            for k, v in edges.items():
+                if v == "Attr":
+                    updated_relation_edges[k] = [v]
+            repre["partial_relation_edges"] = updated_relation_edges
+            
             repre["image_t"] = updated_canvas
             repre["id_object_mask"] = self.generate_objs_mask()
             return repre
