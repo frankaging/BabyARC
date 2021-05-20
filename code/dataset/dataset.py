@@ -116,7 +116,9 @@ class BabyARCDataset(object):
         min_length=20, max_length=30, 
         allow_connect=False,
         rainbow_prob=0.2, 
-        concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"],
+        concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", 
+                            "randomShape", "arcShape", "Tshape", "Eshape", 
+                            "Hshape", "Cshape", "Ashape", "Fshape"],
         parsing_check=False,
         color_avail=None,
     ):
@@ -307,6 +309,47 @@ class BabyARCDataset(object):
                         obj_refer = self.ObE.sample_objs_with_l_shape(n=1, w_lims=w_lims, h_lims=h_lims, 
                                                                       thickness=1, rainbow_prob=rainbow_prob, 
                                                                       direction=direction)[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
+                        placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
+                                                                 connect_allow=allow_connect) # place old obj with free pos
+                        if placement_result == -1:
+                            break
+                    elif node_right.startswith("Tshape") or \
+                        node_right.startswith("Eshape") or \
+                        node_right.startswith("Hshape") or \
+                        node_right.startswith("Cshape") or \
+                        node_right.startswith("Ashape") or \
+                        node_right.startswith("Fshape"):
+                        lshape_spec = node_right.split("_")[-1]
+                        lshape_spec = ast.literal_eval(lshape_spec)
+                        if lshape_spec[0] != -1:
+                            w_lims = [lshape_spec[0], lshape_spec[0]]
+                        else:
+                            w_lims = [2, test_canvas.init_canvas.shape[1]-1]
+                        if lshape_spec[1] != -1:
+                            h_lims = [lshape_spec[1], lshape_spec[1]]
+                        else:
+                            h_lims = [2, test_canvas.init_canvas.shape[0]-1]  
+                        if node_right.startswith("Tshape"):
+                            obj_refer = self.ObE.sample_objs_with_t_shape(n=1, w_lims=w_lims, h_lims=h_lims, 
+                                                                          rainbow_prob=rainbow_prob)[0]
+                        elif node_right.startswith("Eshape"):
+                            obj_refer = self.ObE.sample_objs_with_e_shape(n=1, w_lims=w_lims, h_lims=h_lims, 
+                                                                          rainbow_prob=rainbow_prob)[0]
+                        elif node_right.startswith("Hshape"):
+                            obj_refer = self.ObE.sample_objs_with_h_shape(n=1, w_lims=w_lims, h_lims=h_lims, 
+                                                                          rainbow_prob=rainbow_prob)[0]
+                        elif node_right.startswith("Cshape"):
+                            obj_refer = self.ObE.sample_objs_with_c_shape(n=1, w_lims=w_lims, h_lims=h_lims, 
+                                                                          rainbow_prob=rainbow_prob)[0]
+                        elif node_right.startswith("Ashape"):
+                            obj_refer = self.ObE.sample_objs_with_a_shape(n=1, w_lims=w_lims, h_lims=h_lims, 
+                                                                          rainbow_prob=rainbow_prob)[0]
+                        elif node_right.startswith("Fshape"):
+                            obj_refer = self.ObE.sample_objs_with_f_shape(n=1, w_lims=w_lims, h_lims=h_lims, 
+                                                                          rainbow_prob=rainbow_prob)[0]
                         if color_avail:
                             # We can sample color now based on color collection.
                             obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))

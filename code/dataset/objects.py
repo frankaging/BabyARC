@@ -177,7 +177,10 @@ class ObjectEngine:
     def sample_objs_by_bound_area(
         self, n=1, w_lim=5, h_lim=5, random_generated=True, 
         rainbow_prob=0.2, 
-        concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"]
+        concept_collection=["line", "Lshape", "rectangle", 
+                            "rectangleSolid", "randomShape", "arcShape", 
+                            "Tshape", "Eshape", 
+                            "Hshape", "Cshape", "Ashape", "Fshape"]
     ):
         """
         sample object within the width and height limits.
@@ -188,7 +191,10 @@ class ObjectEngine:
         for i in range(n):
             chosen_shape = np.random.choice(concept_collection)
 
-            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"}:
+            if chosen_shape in {"line", "Lshape", "rectangle", 
+                                "rectangleSolid", "randomShape", "arcShape", 
+                                "Tshape", "Eshape", 
+                                "Hshape", "Cshape", "Ashape", "Fshape"}:
                 if chosen_shape == "line":
                     direction = random.randint(0,1)
                     if direction == 0:
@@ -207,6 +213,36 @@ class ObjectEngine:
                         n=1, w_lims=[2,w_lim], h_lims=[2,h_lim], thickness=1, 
                         rainbow_prob=rainbow_prob, direction=direction
                     )[0]
+                elif chosen_shape == "Tshape":
+                    obj = self.sample_objs_with_t_shape(
+                        n=1, w_lims=[3,5], h_lims=[3,5], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]
+                elif chosen_shape == "Eshape":
+                    obj = self.sample_objs_with_e_shape(
+                        n=1, h_lims=[5,6], w_lims=[2,4], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]
+                elif chosen_shape == "Hshape":
+                    obj = self.sample_objs_with_h_shape(
+                        n=1, h_lims=[3,5], w_lims=[3,5], 
+                        rainbow_prob=rainbow_prob,
+                    )[0] 
+                elif chosen_shape == "Cshape":
+                    obj = self.sample_objs_with_c_shape(
+                        n=1, h_lims=[3,5], w_lims=[2,4], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]   
+                elif chosen_shape == "Ashape":
+                    obj = self.sample_objs_with_a_shape(
+                        n=1, h_lims=[4,6], w_lims=[3,5], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]   
+                elif chosen_shape == "Fshape":
+                    obj = self.sample_objs_with_f_shape(
+                        n=1, h_lims=[4,6], w_lims=[2,4], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]   
                 elif chosen_shape == "rectangle":
                     obj = self.sample_objs_with_rectangle(
                         n=1, w_lims=[2,w_lim], h_lims=[2,h_lim], 
@@ -286,7 +322,10 @@ class ObjectEngine:
     def sample_objs_by_fixed_width(
         self, n=1, width=5, h_lim=5, 
         random_generated=True, rainbow_prob=0.2, 
-        concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"]
+        concept_collection=["line", "Lshape", "rectangle", 
+                            "rectangleSolid", "randomShape", "arcShape", 
+                            "Tshape", "Eshape", 
+                            "Hshape", "Cshape", "Ashape", "Fshape"]
     ):
         """
         sample object within the width and height limits.
@@ -296,7 +335,10 @@ class ObjectEngine:
         objs_sampled = []
         for i in range(n):
             chosen_shape = np.random.choice(concept_collection)
-            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"}:
+            if chosen_shape in {"line", "Lshape", "rectangle", 
+                                "rectangleSolid", "randomShape", "arcShape", 
+                                "Tshape", "Eshape", 
+                                "Hshape", "Cshape", "Ashape", "Fshape"}:
                 if chosen_shape == "line":
                     direction = 1
                     len_lims=[width,width]
@@ -312,6 +354,44 @@ class ObjectEngine:
                         n=1, w_lims=[width,width], h_lims=[2,h_lim], thickness=1, 
                         rainbow_prob=rainbow_prob, direction=direction
                     )[0]
+                    
+                elif chosen_shape == "Tshape":
+                    obj = self.sample_objs_with_t_shape(
+                        n=1, w_lims=[width,width], h_lims=[3,5], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]
+                    if width < 3:
+                        return []
+                elif chosen_shape == "Eshape":
+                    obj = self.sample_objs_with_e_shape(
+                        n=1, w_lims=[width,width], h_lims=[5,6], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]
+                elif chosen_shape == "Hshape":
+                    obj = self.sample_objs_with_h_shape(
+                        n=1, w_lims=[width,width], h_lims=[3,5], 
+                        rainbow_prob=rainbow_prob,
+                    )[0] 
+                    if width < 3:
+                        return []
+                elif chosen_shape == "Cshape":
+                    obj = self.sample_objs_with_c_shape(
+                        n=1, w_lims=[width,width], h_lims=[3,5], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]   
+                elif chosen_shape == "Ashape":
+                    obj = self.sample_objs_with_a_shape(
+                        n=1, w_lims=[width,width], h_lims=[4,6], 
+                        rainbow_prob=rainbow_prob,
+                    )[0] 
+                    if width < 3:
+                        return []
+                elif chosen_shape == "Fshape":
+                    obj = self.sample_objs_with_f_shape(
+                        n=1, w_lims=[width,width], h_lims=[4,6], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]   
+
                 elif chosen_shape == "rectangle":
                     obj = self.sample_objs_with_rectangle(
                         n=1, w_lims=[width,width], h_lims=[2,h_lim], 
@@ -382,7 +462,10 @@ class ObjectEngine:
     def sample_objs_by_fixed_height(
         self, n=1, height=5, w_lim=5, 
         random_generated=True, rainbow_prob=0.2, 
-        concept_collection=["line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"]
+        concept_collection=["line", "Lshape", "rectangle", 
+                            "rectangleSolid", "randomShape", "arcShape", 
+                            "Tshape", "Eshape", 
+                            "Hshape", "Cshape", "Ashape", "Fshape"]
     ):
         """
         sample object within the width and height limits.
@@ -392,7 +475,10 @@ class ObjectEngine:
         objs_sampled = []
         for i in range(n):
             chosen_shape = np.random.choice(concept_collection)
-            if chosen_shape in {"line", "Lshape", "rectangle", "rectangleSolid", "randomShape", "arcShape"}:
+            if chosen_shape in {"line", "Lshape", "rectangle", 
+                                "rectangleSolid", "randomShape", "arcShape", 
+                                "Tshape", "Eshape", 
+                                "Hshape", "Cshape", "Ashape", "Fshape"}:
                 if chosen_shape == "line":
                     direction = 0
                     len_lims=[height,height]
@@ -408,6 +494,48 @@ class ObjectEngine:
                         n=1, w_lims=[2,w_lim], h_lims=[height,height], thickness=1, 
                         rainbow_prob=rainbow_prob, direction=direction
                     )[0]
+                elif chosen_shape == "Tshape":
+                    obj = self.sample_objs_with_t_shape(
+                        n=1, w_lims=[3,5], h_lims=[height,height], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]
+                    if height < 3:
+                        return []
+                elif chosen_shape == "Eshape":
+                    obj = self.sample_objs_with_e_shape(
+                        n=1, w_lims=[2,w_lim], h_lims=[height,height], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]
+                    if height < 5:
+                        return []
+                elif chosen_shape == "Hshape":
+                    obj = self.sample_objs_with_h_shape(
+                        n=1, w_lims=[3,5], h_lims=[height,height], 
+                        rainbow_prob=rainbow_prob,
+                    )[0] 
+                    if height < 3:
+                        return []
+                elif chosen_shape == "Cshape":
+                    obj = self.sample_objs_with_c_shape(
+                        n=1, w_lims=[2,w_lim], h_lims=[height,height], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]   
+                    if height < 3:
+                        return []
+                elif chosen_shape == "Ashape":
+                    obj = self.sample_objs_with_a_shape(
+                        n=1, w_lims=[3,5], h_lims=[height,height], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]   
+                    if height < 4:
+                        return []
+                elif chosen_shape == "Fshape":
+                    obj = self.sample_objs_with_f_shape(
+                        n=1, w_lims=[2,w_lim], h_lims=[height,height], 
+                        rainbow_prob=rainbow_prob,
+                    )[0]  
+                    if height < 4:
+                        return []
                 elif chosen_shape == "rectangle":
                     obj = self.sample_objs_with_rectangle(
                         n=1, w_lims=[2,w_lim], h_lims=[height,height], 
@@ -751,7 +879,159 @@ class ObjectEngine:
             else:
                 objs_sampled.append(self.random_color_rainbow(new_obj))
         return objs_sampled
+       
+    def sample_objs_with_t_shape(self, n=1, w_lims=[5,10], h_lims=[5,10], rainbow_prob=0.2):
+        
+        objs_sampled = []
+        for i in range(n):
+            w = random.randint(w_lims[0], w_lims[1])
+            h = random.randint(h_lims[0], h_lims[1])
+
+            img_t = torch.zeros(h, w)
             
+            for i in range(0, w):
+                img_t[0, i] = 1 # -
+            for i in range(0, h):
+                img_t[i, w//2] = 1 # |
+                
+            # color
+            new_obj = Object(img_t, position_tags=[])
+
+            if random.random() <= 1-rainbow_prob:
+                objs_sampled.append(self.random_rotation(self.random_color(new_obj, rainbow_prob=rainbow_prob)))
+            else:
+                objs_sampled.append(self.random_rotation(self.random_color_rainbow(new_obj)))
+        return objs_sampled
+        
+    def sample_objs_with_f_shape(self, n=1, w_lims=[5,10], h_lims=[5,10], rainbow_prob=0.2):
+        
+        objs_sampled = []
+        for i in range(n):
+            w = random.randint(w_lims[0], w_lims[1])
+            h = random.randint(h_lims[0], h_lims[1])
+
+            img_t = torch.zeros(h, w)
+            
+            for i in range(0, w):
+                img_t[0, i] = 1 # -
+            for i in range(0, h):
+                img_t[i, 0] = 1 # |
+            for i in range(0, w):
+                img_t[h//2, i] = 1 # _
+                
+            # color
+            new_obj = Object(img_t, position_tags=[])
+
+            if random.random() <= 1-rainbow_prob:
+                objs_sampled.append(self.random_rotation(self.random_color(new_obj, rainbow_prob=rainbow_prob)))
+            else:
+                objs_sampled.append(self.random_rotation(self.random_color_rainbow(new_obj)))
+        return objs_sampled
+        
+    def sample_objs_with_e_shape(self, n=1, w_lims=[5,10], h_lims=[5,10], rainbow_prob=0.2):
+        
+        objs_sampled = []
+        for i in range(n):
+            w = random.randint(w_lims[0], w_lims[1])
+            h = random.randint(h_lims[0], h_lims[1])
+
+            img_t = torch.zeros(h, w)
+            
+            for i in range(0, w):
+                img_t[0, i] = 1 # -
+            for i in range(0, h):
+                img_t[i, 0] = 1 # |
+            for i in range(0, w):
+                img_t[h//2, i] = 1 # _
+            for i in range(0, w):
+                img_t[-1, i] = 1 # _
+                
+            # color
+            new_obj = Object(img_t, position_tags=[])
+
+            if random.random() <= 1-rainbow_prob:
+                objs_sampled.append(self.random_rotation(self.random_color(new_obj, rainbow_prob=rainbow_prob)))
+            else:
+                objs_sampled.append(self.random_rotation(self.random_color_rainbow(new_obj)))
+        return objs_sampled
+        
+    def sample_objs_with_h_shape(self, n=1, w_lims=[5,10], h_lims=[5,10], rainbow_prob=0.2):
+        
+        objs_sampled = []
+        for i in range(n):
+            w = random.randint(w_lims[0], w_lims[1])
+            h = random.randint(h_lims[0], h_lims[1])
+
+            img_t = torch.zeros(h, w)
+            
+            for i in range(0, h):
+                img_t[i, -1] = 1 # |
+            for i in range(0, h):
+                img_t[i, 0] = 1 # |
+            for i in range(0, w):
+                img_t[h//2, i] = 1 # _
+                
+            # color
+            new_obj = Object(img_t, position_tags=[])
+
+            if random.random() <= 1-rainbow_prob:
+                objs_sampled.append(self.random_rotation(self.random_color(new_obj, rainbow_prob=rainbow_prob)))
+            else:
+                objs_sampled.append(self.random_rotation(self.random_color_rainbow(new_obj)))
+        return objs_sampled
+        
+    def sample_objs_with_c_shape(self, n=1, w_lims=[5,10], h_lims=[5,10], rainbow_prob=0.2):
+        
+        objs_sampled = []
+        for i in range(n):
+            w = random.randint(w_lims[0], w_lims[1])
+            h = random.randint(h_lims[0], h_lims[1])
+
+            img_t = torch.zeros(h, w)
+            
+            for i in range(0, h):
+                img_t[i, 0] = 1 # |
+            for i in range(0, w):
+                img_t[0, i] = 1 # _
+            for i in range(0, w):
+                img_t[-1, i] = 1 # _
+                
+            # color
+            new_obj = Object(img_t, position_tags=[])
+
+            if random.random() <= 1-rainbow_prob:
+                objs_sampled.append(self.random_rotation(self.random_color(new_obj, rainbow_prob=rainbow_prob)))
+            else:
+                objs_sampled.append(self.random_rotation(self.random_color_rainbow(new_obj)))
+        return objs_sampled
+    
+    def sample_objs_with_a_shape(self, n=1, w_lims=[5,10], h_lims=[5,10], rainbow_prob=0.2):
+        
+        objs_sampled = []
+        for i in range(n):
+            w = random.randint(w_lims[0], w_lims[1])
+            h = random.randint(h_lims[0], h_lims[1])
+
+            img_t = torch.zeros(h, w)
+            
+            for i in range(0, h):
+                img_t[i, 0] = 1 # |
+            for i in range(0, h):
+                img_t[i, -1] = 1 # |
+            for i in range(0, w):
+                img_t[0, i] = 1 # _
+            for i in range(0, w):
+                img_t[h//2, i] = 1 # _
+                
+            # color
+            new_obj = Object(img_t, position_tags=[])
+
+            if random.random() <= 1-rainbow_prob:
+                objs_sampled.append(self.random_rotation(self.random_color(new_obj, rainbow_prob=rainbow_prob)))
+            else:
+                objs_sampled.append(self.random_rotation(self.random_color_rainbow(new_obj)))
+        return objs_sampled
+        
     def sample_objs_with_l_shape(self, n=1, w_lims=[5,10], h_lims=[5,10], thickness=1, rainbow_prob=0.2, direction=0):
         
         objs_sampled = []
