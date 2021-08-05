@@ -467,13 +467,23 @@ class Canvas:
         return -1
     
     def placement(self, to_placement_obj, to_relate_objs=[], placement_rule=None, merge_type="None", 
-                  consider_tag=True, connect_allow=False):
-        curr_obj = copy.deepcopy(to_placement_obj)
-        canvas_r = self.init_canvas.shape[0]
-        canvas_c = self.init_canvas.shape[1]
-        obj_r = to_placement_obj.image_t.shape[0]
-        obj_c = to_placement_obj.image_t.shape[1]
-        curr_obj_idx = len(self.oid_map.keys())
+                  consider_tag=True, connect_allow=False, in_place=False, to_placement_obj_id=None):
+        
+        if in_place:
+            # if in_place, it means it is a existing object.
+            curr_obj = copy.deepcopy(to_placement_obj)
+            canvas_r = self.init_canvas.shape[0]
+            canvas_c = self.init_canvas.shape[1]
+            obj_r = to_placement_obj.image_t.shape[0]
+            obj_c = to_placement_obj.image_t.shape[1]
+            curr_obj_idx = to_placement_obj_id
+        else:
+            curr_obj = copy.deepcopy(to_placement_obj)
+            canvas_r = self.init_canvas.shape[0]
+            canvas_c = self.init_canvas.shape[1]
+            obj_r = to_placement_obj.image_t.shape[0]
+            obj_c = to_placement_obj.image_t.shape[1]
+            curr_obj_idx = len(self.oid_map.keys())
 
         # the placement result r and c values
         placement_r = -1

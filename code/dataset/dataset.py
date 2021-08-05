@@ -574,19 +574,109 @@ class BabyARCDataset(object):
                 new_node_count += 1
             
             if new_node_count == 0:
-                # support inplace object manipulations for some relations
-                # placement_result = test_canvas.placement_inplace(
-                #     nodes[node_left], 
-                #     to_relate_objs=[nodes[node_right]], 
-                #     placement_rule=rel_n
-                # )
-                if rel_n == "SameColor":
-                    # we allow color change i think.
-                    print("Inplace Object Placement Is Not Allowed!")
-                    assert False
-                else:
-                    print("Inplace Object Placement Is Not Allowed!")
-                    assert False
+                """
+                Limitations:
+                We only support non-cycle dependencies.
+                A->B->C-> ...
+                A->B; A->C
+                Above patterns are fine.
+                A->B->A-> ...
+                A->B; B->A
+                Above patterns are NOT fine.
+                """
+                print("TODO: support inplace object manipulations for some relations")
+                
+                # WARNING: this new are pretentious. We are essentially adjusting
+                # features of the node_new in this scope.
+                node_new = node_right
+                node_old = node_left
+                obj_new = test_canvas.get_obj(nodes[node_new])
+                obj_old = test_canvas.get_obj(nodes[node_old])
+                if rel_n == "IsInside":
+                    # the new obj is the outside obj
+                    # this is to place the object inside referring to the outside object
+                    out_obj = obj_new
+                    placement_result = test_canvas.placement(
+                        out_obj, 
+                        to_relate_objs=[nodes[node_old]], 
+                        placement_rule="IsOutside", 
+                        connect_allow=allow_connect,
+                        # in_place placement
+                        in_place=True, 
+                        to_placement_obj_id=nodes[node_new]
+                    )
+                    if placement_result == -1:
+                        break
+                elif rel_n == "SameAll":
+                    left_map = obj_new.image_t
+                    right_map = obj_old.image_t
+                    if torch.equal(left_map, right_map):
+                        pass
+                    else:
+                        placement_result = -1
+                        break
+                elif rel_n == "SameRow":
+                    in_obj = obj_new
+                    placement_result = test_canvas.placement(
+                        in_obj, 
+                        to_relate_objs=[nodes[node_old]], 
+                        placement_rule=rel_n, 
+                        connect_allow=allow_connect,
+                        # in_place placement
+                        in_place=True, 
+                        to_placement_obj_id=nodes[node_new]
+                    )
+                    if placement_result == -1:
+                        break
+                elif rel_n == "SameCol":
+                    in_obj = obj_new
+                    placement_result = test_canvas.placement(
+                        in_obj, 
+                        to_relate_objs=[nodes[node_old]], 
+                        placement_rule=rel_n,
+                        connect_allow=allow_connect,
+                        # in_place placement
+                        in_place=True, 
+                        to_placement_obj_id=nodes[node_new]
+                    )
+                    if placement_result == -1:
+                        break
+                elif rel_n == "IsTouch":
+                    in_obj = obj_new
+                    placement_result = test_canvas.placement(
+                        in_obj, 
+                        to_relate_objs=[nodes[node_old]], 
+                        placement_rule=rel_n,
+                        connect_allow=allow_connect,
+                        # in_place placement
+                        in_place=True, 
+                        to_placement_obj_id=nodes[node_new]
+                    )
+                    if placement_result == -1:
+                        break
+                elif rel_n == "SameShape":
+                    left_map = obj_new.image_t.bool()
+                    right_map = obj_old.image_t.bool()
+                    if torch.equal(left_map, right_map):
+                        pass
+                    else:
+                        placement_result = -1
+                        break
+                elif rel_n == "SameColor":
+                    new_c = test_canvas.unify_color(nodes[node_old])
+                    obj_new = self.ObE.fix_color(obj_new, new_color=new_c)
+                    placement_result = test_canvas.placement(
+                        obj_new, 
+                        placement_rule="SameColor", 
+                        consider_tag=False,
+                        connect_allow=allow_connect,
+                        # in_place placement
+                        in_place=True, 
+                        to_placement_obj_id=nodes[node_new]
+                    )
+                    if placement_result == -1:
+                        break
+                    
             elif new_node_count == 2:
                 if rel_n == "IsInside":
                     # UPDATE STATUS: DONE
@@ -1073,10 +1163,21 @@ class BabyARCDataset(object):
             if len(objs) != len(placed_objs):
                 return -1
         
+        # check if all relations complied.
+        ret_dict = test_canvas.repr_as_dict(nodes, edges)
+        for edge, rel in edges.items():
+            node_left = edge[0]
+            node_right = edge[1]
+            rel_n = rel
+            if edge not in ret_dict['partial_relation_edges'].keys():
+                return -1
+            if not rel_n in ret_dict['partial_relation_edges'][edge]:
+                return -1
+
         if is_plot:
             test_canvas.render()
             
-        return test_canvas.repr_as_dict(nodes, edges)
+        return ret_dict
 
     def sample_single_task_canvas(self, retry=5, is_plot=True):
         edges = self.sample_single_core_edges()
