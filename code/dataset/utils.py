@@ -265,8 +265,13 @@ def SameShape(image1, pos1, image2, pos2):
         return (image1.bool() == image2.bool()).all()
 
 def SameColor(image1, pos1, image2, pos2):
-    color1 = -1 if len(image1.unique()) != 1 else image1.unique()[0]
-    color2 = -1 if len(image2.unique()) != 1 else image2.unique()[0]
+    color1 = -1 if len(image1.unique()) > 2 else image1.unique()[0]
+    color2 = -1 if len(image2.unique()) > 2 else image2.unique()[0]
+    if image1.unique()[0] == 0:
+        color1 = image1.unique()[1]
+    if image2.unique()[0] == 0:
+        color2 = image2.unique()[1]
+        
     if color1 == -1 or color2 == -1:
         return False
     else:
