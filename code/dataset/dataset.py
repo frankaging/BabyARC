@@ -1167,7 +1167,7 @@ class BabyARCDataset(object):
                     )
                     if color_avail:
                         # We can sample color now based on color collection.
-                        in_obj = self.ObE.fix_color(in_obj, random.choice(color_avail))
+                        obj_new = self.ObE.fix_color(obj_new, random.choice(color_avail))
                     placement_result = test_canvas.placement(
                         obj_new, 
                         placement_rule="SameShape", 
