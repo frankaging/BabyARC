@@ -1,2 +1,3 @@
 # Baby-ARC
-BabyARC: A Scalable Abstract Reasoning Corpus with Knowledge Priors
+
+Baby Abstract ReasoningCorpus (BabyARC) dataset engine, for generating grid-world-based abstract reasoning tasks in alarge scale.
