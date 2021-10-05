@@ -121,6 +121,8 @@ class BabyARCDataset(object):
                             "Hshape", "Cshape", "Ashape", "Fshape"],
         parsing_check=False,
         color_avail=None,
+        save_file=None,
+        axis_off=False,
     ):
         relation_num = len(edges)
         nodes = OrderedDict({ })
@@ -1236,7 +1238,7 @@ class BabyARCDataset(object):
                 return -1
 
         if is_plot:
-            test_canvas.render()
+            test_canvas.render(save_file=save_file, axis_off=axis_off)
             
         return ret_dict
 

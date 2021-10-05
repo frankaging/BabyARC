@@ -783,7 +783,7 @@ class Canvas:
             repre["id_object_mask"] = self.generate_objs_mask()
             return repre
                     
-    def render(self, obj_mask=None, is_plot=True, minimum_cover=False):
+    def render(self, obj_mask=None, is_plot=True, minimum_cover=False, save_file=None, axis_off=False):
         if minimum_cover:
             r_min, c_min = 99, 99
             r_max, c_max = -1, -1
@@ -812,8 +812,13 @@ class Canvas:
                 for j in range(obj_t.shape[1]):
                     image[i,j] = np.array(self.color_dict[obj_t[i,j].tolist()])
             if is_plot:
+                fig, ax = plt.subplots()
                 plot_with_boundary(image, plt)
-                # plt.axis('off')
+                if axis_off:
+                    plt.axis('off')
+                if save_file is not None:
+                    fig.savefig(save_file)
+                    
             return ret_canvas, r_min, c_min
         else:
             ret_canvas = self.init_canvas.clone()
@@ -832,8 +837,13 @@ class Canvas:
                 for j in range(obj_t.shape[1]):
                     image[i,j] = np.array(self.color_dict[obj_t[i,j].tolist()])
             if is_plot:
+                fig, ax = plt.subplots()
                 plot_with_boundary(image, plt)
-                # plt.axis('off')
+                if axis_off:
+                    plt.axis('off')
+                if save_file is not None:
+                    fig.savefig(save_file)
+
             return ret_canvas, 0, 0
         
     def parse_relations(self):
