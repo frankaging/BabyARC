@@ -123,6 +123,7 @@ class BabyARCDataset(object):
         color_avail=None,
         save_file=None,
         axis_off=False,
+        large_shape=False,
     ):
         relation_num = len(edges)
         nodes = OrderedDict({ })
@@ -593,7 +594,19 @@ class BabyARCDataset(object):
                 node_old = node_left
                 obj_new = test_canvas.get_obj(nodes[node_new])
                 obj_old = test_canvas.get_obj(nodes[node_old])
-                if rel_n == "IsInside":
+                if rel_n == "IsOutside":
+                    placement_result = test_canvas.placement(
+                        obj_new, 
+                        to_relate_objs=[nodes[node_old]], 
+                        placement_rule="IsInside", 
+                        connect_allow=allow_connect,
+                        # in_place placement
+                        in_place=True, 
+                        to_placement_obj_id=nodes[node_new]
+                    )
+                    if placement_result == -1:
+                        break
+                elif rel_n == "IsInside":
                     # the new obj is the outside obj
                     # this is to place the object inside referring to the outside object
                     out_obj = obj_new
@@ -682,8 +695,12 @@ class BabyARCDataset(object):
                 if rel_n == "IsInside":
                     # UPDATE STATUS: DONE
                     # sample a outside reactangle
-                    w_lims = [4, max(4,test_canvas.init_canvas.shape[1]//2)]
-                    h_lims = [4, max(4,test_canvas.init_canvas.shape[0]//2)]
+                    if large_shape:
+                        w_lims = [4, test_canvas.init_canvas.shape[1]]
+                        h_lims = [4, test_canvas.init_canvas.shape[0]]
+                    else:
+                        w_lims = [4, max(4,test_canvas.init_canvas.shape[1]//2)]
+                        h_lims = [4, max(4,test_canvas.init_canvas.shape[0]//2)]
                     # this is to place the object inside referring to the outside object
                     out_obj = self.ObE.sample_objs_with_rectangle(
                         n=1, thickness=1, rainbow_prob=rainbow_prob,
@@ -1232,10 +1249,13 @@ class BabyARCDataset(object):
             node_left = edge[0]
             node_right = edge[1]
             rel_n = rel
-            if edge not in ret_dict['partial_relation_edges'].keys():
-                return -1
-            if not rel_n in ret_dict['partial_relation_edges'][edge]:
-                return -1
+            
+            # this is a special case, we don't have that.
+            if not rel_n == "IsOutside":
+                if edge not in ret_dict['partial_relation_edges'].keys():
+                    return -1
+                if not rel_n in ret_dict['partial_relation_edges'][edge]:
+                    return -1
 
         if is_plot:
             test_canvas.render(save_file=save_file, axis_off=axis_off)

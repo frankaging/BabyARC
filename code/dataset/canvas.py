@@ -150,6 +150,8 @@ class Canvas:
         to_render_img = self.generate_render()
         to_placement_mask = \
             self.generate_mask_inplace([[(p_r, p_c), to_placement_obj]], connect_allow=connect_allow)
+        # print(to_render_img)
+        # print(to_placement_mask)
         
         canvas_r = self.init_canvas.shape[0]
         canvas_c = self.init_canvas.shape[1]
@@ -277,6 +279,7 @@ class Canvas:
             j = pos[1]
             if self._check_exclusive(i, j, to_placement_obj=to_placement_obj, connect_allow=connect_allow):
                 return i, j
+                
         return -1, -1
 
     def _propose_position_is_outside(self, o_r, o_c, p_r, p_c, rel_r, rel_c,
@@ -292,8 +295,8 @@ class Canvas:
         random_pos_iter = []
         r_lower = max(rel_p_r-(o_r-rel_r), 0)
         c_lower = max(rel_p_c-(o_c-rel_c), 0)
-        for i in range(r_lower, rel_p_r-1):
-            for j in range(c_lower, rel_p_c-1):
+        for i in range(rel_p_r+1, rel_p_r+rel_r-1):
+            for j in range(rel_p_c+1, rel_p_c+rel_c-1):
                 random_pos_iter.append((i,j))
         random.shuffle(random_pos_iter)
         for pos in random_pos_iter:
@@ -417,6 +420,7 @@ class Canvas:
                                                                 rel_p_r, rel_p_c,
                                                                 to_placement_obj=to_placement_obj, 
                                                                 connect_allow=connect_allow)
+                    
                 elif placement_rule == "IsOutside":
                     to_relate_obj = to_relate_objs[0]
                     rel_pos = self.opos_map[to_relate_obj]
@@ -433,7 +437,7 @@ class Canvas:
                     p_r, p_c = self._propose_position_is_touch(o_r, o_c, p_r, p_c,
                                                                to_relate_obj=to_relate_obj,
                                                                 to_placement_obj=to_placement_obj)
-                    
+        
         if self._check_exclusive(p_r, p_c, to_placement_obj=to_placement_obj, connect_allow=connect_allow):
             return (p_r, p_c)
 
@@ -470,6 +474,14 @@ class Canvas:
                   consider_tag=True, connect_allow=False, in_place=False, to_placement_obj_id=None):
         
         if in_place:
+            # there are some corner cases, we want to skip actual placement.
+            # e.x. SameColor
+            if placement_rule == "SameColor":
+                curr_obj = copy.deepcopy(to_placement_obj)
+                curr_obj_idx = to_placement_obj_id
+                self.oid_map[curr_obj_idx] = curr_obj
+                (placement_r, placement_c) = self.opos_map[curr_obj_idx]
+                return (placement_r, placement_c)
             # if in_place, it means it is a existing object.
             curr_obj = copy.deepcopy(to_placement_obj)
             canvas_r = self.init_canvas.shape[0]
@@ -477,6 +489,10 @@ class Canvas:
             obj_r = to_placement_obj.image_t.shape[0]
             obj_c = to_placement_obj.image_t.shape[1]
             curr_obj_idx = to_placement_obj_id
+            
+            # remove from canvas for now.
+            del self.oid_map[curr_obj_idx]
+            del self.opos_map[curr_obj_idx]
         else:
             curr_obj = copy.deepcopy(to_placement_obj)
             canvas_r = self.init_canvas.shape[0]
