@@ -22,7 +22,7 @@ import ast
 # Baby-ARC related imports
 from .constants import *
 from .utils import find_connected_components
-    
+
 import logging
 FORMAT = "%(asctime)-15s %(message)s"
 logging.basicConfig(format=FORMAT, level=logging.DEBUG,
@@ -75,7 +75,10 @@ class ObjectEngine:
                           8: [0, 1, 1],
                           9: [.64, .16, .16],
                          }
-        self.obj_pool = self._iso_obj_pool(obj_pool, debug=debug)
+        if len(obj_pool) != 0:
+            self.obj_pool = self._iso_obj_pool(obj_pool, debug=debug)
+        else:
+            self.obj_pool = []
         self.background_c = background_c
     
     def plot_objs(self, img_objs):
@@ -318,7 +321,7 @@ class ObjectEngine:
                             objs_sampled.append(self.random_color_rainbow(new_obj))
 
         return objs_sampled
-
+    
     def sample_objs_by_fixed_width(
         self, n=1, width=5, h_lim=5, 
         random_generated=True, rainbow_prob=0.2, 
@@ -603,6 +606,173 @@ class ObjectEngine:
 
         return objs_sampled
     
+    def sample_objs_with_composite_shape(
+        self, n=1, w_lims=[16,16], h_lims=[16,16], 
+        rainbow_prob=0.0, 
+        chosen_concept="RectE1a",
+        n_retry=30,
+        allow_connect=True,
+        is_plot=False,
+        parsing_check=True,
+        color_avail=[1,2,3,4,5,6,7,8,9],
+    ):
+        from .dataset import BabyARCDataset
+        from .canvas import Canvas
+        if color_avail == None:
+            color_avail=[1,2,3,4,5,6,7,8,9]
+        assert chosen_concept in {"RectE1a", "RectE1b", "RectE1c", 
+                                   "RectE2a", "RectE2b", "RectE2c",
+                                   "RectE3a", "RectE3b", "RectE3c", 
+                                   "RectF1a", "RectF1b", "RectF1c", 
+                                   "RectF2a", "RectF2b", "RectF2c",
+                                   "RectF3a", "RectF3b", "RectF3c",}
+        """
+        Different from other concepts, here the w and h limit is the
+        upper limit only. It is not used to sample anything.
+        """
+        # we are doing recursive babyARC canvas sampling here.
+        canvas_size=min([w_lims[0], w_lims[1], h_lims[0], h_lims[1]])
+        _dataset_engine = BabyARCDataset(
+            None,
+            save_directory="./BabyARCDataset/", 
+            object_limit=1, noise_level=0, 
+            canvas_size=canvas_size,
+            skip_load_pretrain_obj=True,
+        ) # canvas makes w=h canvas
+        
+        # now, depends on the input composite type, we make the corresponding canvas
+        obj_spec = None
+        upper_bound_size=canvas_size
+        if chosen_concept == "RectE1a" or chosen_concept == "RectF1a" or chosen_concept == "RectE1b" or chosen_concept == "RectF1b":
+            char_shape = "E" if "E" in chosen_concept else "F"
+            out_w = np.random.randint(5, upper_bound_size)
+            out_h = np.random.randint(5, upper_bound_size)
+            in_w = np.random.randint(4, out_w)
+            in_h = np.random.randint(4, out_h)
+            char_w = np.random.randint(3, upper_bound_size//2+1)
+            char_h = np.random.randint(5, upper_bound_size//2+1)
+            obj_spec = [(('obj_0', f'rectangle_[{out_w},{out_h}]'), 'Attr'), 
+                         (('obj_1', f'rectangle_[{in_w},{in_h}]'), 'Attr'), 
+                         (('obj_0', 'obj_1'), 'IsOutside'),
+                         (('obj_2', f'{char_shape}shape_[{char_w},{char_h}]'), 'Attr')]
+        elif chosen_concept == "RectE1c" or chosen_concept == "RectF1c":
+            char_shape = "E" if "E" in chosen_concept else "F"
+            out_w = np.random.randint(5, upper_bound_size)
+            out_h = np.random.randint(5, upper_bound_size)
+            in_w = np.random.randint(4, out_w)
+            in_h = np.random.randint(4, out_h)
+            char_w = np.random.randint(3, upper_bound_size//2+1)
+            char_h = np.random.randint(5, upper_bound_size//2+1)
+            obj_spec = [(('obj_0', f'rectangle_[{out_w},{out_h}]'), 'Attr'), 
+                         (('obj_1', f'rectangle_[{in_w},{in_h}]'), 'Attr'), 
+                         (('obj_0', 'obj_1'), 'IsOutside'),
+                         (('obj_2', f'{char_shape}shape_[{char_w},{char_h}]'), 'Attr'), 
+                         (('obj_1', 'obj_2'), 'SameColor')]
+        elif chosen_concept == "RectE2a" or chosen_concept == "RectF2a" or chosen_concept == "RectE2b" or chosen_concept == "RectF2b":
+            char_shape = "E" if "E" in chosen_concept else "F"
+            out_w = np.random.randint(5, upper_bound_size)
+            out_h = np.random.randint(5, upper_bound_size)
+            in_w = np.random.randint(4, upper_bound_size//2)
+            in_h = np.random.randint(4, upper_bound_size//2)
+            char_w = np.random.randint(3, upper_bound_size//2)
+            char_h = np.random.randint(5, upper_bound_size//2)
+            obj_spec = [(('obj_0', f'rectangle_[{out_w},{out_h}]'), 'Attr'), 
+                         (('obj_1', f'rectangle_[{in_w},{in_h}]'), 'Attr'), 
+                         (('obj_0', 'obj_1'), 'IsOutside'),
+                         (('obj_2', f'{char_shape}shape_[{char_w},{char_h}]'), 'Attr'), 
+                         (('obj_0', 'obj_2'), 'IsOutside')]
+        elif chosen_concept == "RectE2c" or chosen_concept == "RectF2c":
+            char_shape = "E" if "E" in chosen_concept else "F"
+            out_w = np.random.randint(5, upper_bound_size)
+            out_h = np.random.randint(5, upper_bound_size)
+            in_w = np.random.randint(4, upper_bound_size//2)
+            in_h = np.random.randint(4, upper_bound_size//2)
+            char_w = np.random.randint(3, upper_bound_size//2)
+            char_h = np.random.randint(5, upper_bound_size//2)
+            obj_spec = [(('obj_0', f'rectangle_[{out_w},{out_h}]'), 'Attr'), 
+                         (('obj_1', f'rectangle_[{in_w},{in_h}]'), 'Attr'), 
+                         (('obj_0', 'obj_1'), 'IsOutside'),
+                         (('obj_2', f'{char_shape}shape_[{char_w},{char_h}]'), 'Attr'), 
+                         (('obj_0', 'obj_2'), 'IsOutside'), 
+                         (('obj_1', 'obj_2'), 'SameColor')]
+        elif chosen_concept == "RectE3a" or chosen_concept == "RectF3a" or chosen_concept == "RectE3b" or chosen_concept == "RectF3b":
+            char_shape = "E" if "E" in chosen_concept else "F"
+            out_w = np.random.randint(9, upper_bound_size)
+            out_h = np.random.randint(9, upper_bound_size)
+            in_w = np.random.randint(7, out_w-1)
+            in_h = np.random.randint(7, out_h-1)
+            char_w = np.random.randint(3, in_w-1)
+            char_h = np.random.randint(5, in_h-1)
+            obj_spec = [(('obj_0', f'rectangle_[{out_w},{out_h}]'), 'Attr'), 
+                         (('obj_1', f'rectangle_[{in_w},{in_h}]'), 'Attr'), 
+                         (('obj_0', 'obj_1'), 'IsOutside'),
+                         (('obj_2', f'Eshape_[{char_w},{char_h}]'), 'Attr'), 
+                         (('obj_1', 'obj_2'), 'IsOutside')]
+        elif chosen_concept == "RectE3c" or chosen_concept == "RectF3c":
+            char_shape = "E" if "E" in chosen_concept else "F"
+            out_w = np.random.randint(9, upper_bound_size)
+            out_h = np.random.randint(9, upper_bound_size)
+            in_w = np.random.randint(7, out_w-1)
+            in_h = np.random.randint(7, out_h-1)
+            char_w = np.random.randint(3, in_w-1)
+            char_h = np.random.randint(5, in_h-1)
+            obj_spec = [(('obj_0', f'rectangle_[{out_w},{out_h}]'), 'Attr'), 
+                         (('obj_1', f'rectangle_[{in_w},{in_h}]'), 'Attr'), 
+                         (('obj_0', 'obj_1'), 'IsOutside'),
+                         (('obj_2', f'Eshape_[{char_w},{char_h}]'), 'Attr'), 
+                         (('obj_1', 'obj_2'), 'IsOutside'), 
+                         (('obj_1', 'obj_2'), 'SameColor')]
+        
+        for i in range(0, n_retry):
+            canvas_dict = _dataset_engine.sample_single_canvas_by_core_edges(
+                OrderedDict(obj_spec),
+                allow_connect=allow_connect,
+                rainbow_prob=rainbow_prob,
+                is_plot=False, # enforced!
+                parsing_check=parsing_check,
+                color_avail=color_avail,
+            )
+            if canvas_dict != -1:
+                # need extra checks here as well!
+                failed = False
+                if "1" in chosen_concept:
+                    mid_ax_y_l = canvas_dict["id_position_map"][1][0].tolist() + (canvas_dict["id_object_map"][1].shape[0])//2
+                    mid_ax_x_l = canvas_dict["id_position_map"][1][1].tolist() + (canvas_dict["id_object_map"][1].shape[1])//2
+
+                    mid_ax_y_r = canvas_dict["id_position_map"][2][0].tolist() + (canvas_dict["id_object_map"][2].shape[0])//2
+                    mid_ax_x_r = canvas_dict["id_position_map"][2][1].tolist() + (canvas_dict["id_object_map"][2].shape[1])//2
+
+                    if abs(mid_ax_y_l-mid_ax_y_r) <= 2 or abs(mid_ax_x_l-mid_ax_x_r) <= 2:
+                        if ('obj_2', 'obj_0') in canvas_dict["partial_relation_edges"]:
+                            if "IsInside" in canvas_dict["partial_relation_edges"][('obj_2', 'obj_0')]:
+                                failed = True
+                        if ('obj_2', 'obj_1') in canvas_dict["partial_relation_edges"]:
+                            if "IsInside" in canvas_dict["partial_relation_edges"][('obj_2', 'obj_1')]:
+                                failed = True
+                    else:
+                        failed = True
+                if "2" in chosen_concept:
+                    if ('obj_2', 'obj_1') in canvas_dict["partial_relation_edges"]:
+                        if "IsInside" in canvas_dict["partial_relation_edges"][('obj_2', 'obj_1')]:
+                            failed = True
+                if "3" in chosen_concept:
+                    pass
+                if "b" in chosen_concept:
+                    if ('obj_1', 'obj_2') in canvas_dict["partial_relation_edges"]:
+                        if "SameColor" in canvas_dict["partial_relation_edges"][('obj_1', 'obj_2')]:
+                            failed = True
+                if not failed:
+                    break
+        if canvas_dict != -1 and not failed:
+            _cavnas = Canvas(
+                repre_dict=canvas_dict
+            )
+            img_t, _, _ = _cavnas.render(is_plot=False, minimum_cover=True)
+            new_obj = Object(img_t, position_tags=[])
+            return [new_obj]
+        else:
+            return [None]
+
     def random_color(self, img_obj, color="random", rainbow_prob=0.2):
         if random.random() <= 1-rainbow_prob:
             ret = copy.deepcopy(img_obj)
@@ -630,7 +800,7 @@ class ObjectEngine:
                 else:
                     # fixed color
                     pass
-        return ret
+        return []
     
     def random_color_rainbow(self, img_obj, color="random"):
         ret = copy.deepcopy(img_obj)

@@ -54,24 +54,28 @@ class BabyARCDataset(object):
         noise_level = 1, 
         canvas_size = None,
         debug = False,
+        skip_load_pretrain_obj=False,
     ): # if canvas size is provided, square shape canvas is sampled.
         if data_dir == None:
-            self.training_objs = torch.load(pretrained_obj_cache)
-            if debug:
-                logger.info("Creating new BabyARC dataset by loading in pretrained objects.")
-                logger.info(f"Loading the object engine and canvas engine with "
-                            f"a limit of object number {object_limit}, "
-                            f"background_color={int(dataset_background_color)}.")
-            if object_limit == 0:
-                if debug:
-                    logger.info("WARNING: 0 object requested from pretrained objects file. Overwrite to 1 for safety.")
-                object_limit = 1 # overwrite to 1 for simplicity
-            if object_limit:
-                self.ObE = ObjectEngine(self.training_objs[:object_limit], 
-                                        background_c=dataset_background_color)
+            if skip_load_pretrain_obj:
+                self.ObE = ObjectEngine(background_c=dataset_background_color)
             else:
-                self.ObE = ObjectEngine(self.training_objs, 
-                                        background_c=dataset_background_color)
+                self.training_objs = torch.load(pretrained_obj_cache)
+                if debug:
+                    logger.info("Creating new BabyARC dataset by loading in pretrained objects.")
+                    logger.info(f"Loading the object engine and canvas engine with "
+                                f"a limit of object number {object_limit}, "
+                                f"background_color={int(dataset_background_color)}.")
+                if object_limit == 0:
+                    if debug:
+                        logger.info("WARNING: 0 object requested from pretrained objects file. Overwrite to 1 for safety.")
+                    object_limit = 1 # overwrite to 1 for simplicity
+                if object_limit:
+                    self.ObE = ObjectEngine(self.training_objs[:object_limit], 
+                                            background_c=dataset_background_color)
+                else:
+                    self.ObE = ObjectEngine(self.training_objs, 
+                                            background_c=dataset_background_color)
             
             self.CanvasE = CanvasEngine(background_color=dataset_background_color)
             self.relation_vocab = relation_vocab
@@ -127,7 +131,10 @@ class BabyARCDataset(object):
     ):
         relation_num = len(edges)
         nodes = OrderedDict({ })
-
+        
+        composite_obj_offset = 0
+        has_composite_obj = False
+        
         if self.canvas_size:
             test_canvas = CanvasEngine().sameple_canvas_by_size(min_length=self.canvas_size, 
                                                                 max_length=self.canvas_size)[0]
@@ -358,6 +365,41 @@ class BabyARCDataset(object):
                             obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
                         placement_result = test_canvas.placement(obj_refer, consider_tag=False, 
                                                                  connect_allow=allow_connect) # place old obj with free pos
+                        if placement_result == -1:
+                            break
+                    elif node_right.split("_")[0] in {"RectE1a", "RectE1b", "RectE1c", 
+                       "RectE2a", "RectE2b", "RectE2c",
+                       "RectE3a", "RectE3b", "RectE3c", 
+                       "RectF1a", "RectF1b", "RectF1c", 
+                       "RectF2a", "RectF2b", "RectF2c",
+                       "RectF3a", "RectF3b", "RectF3c",}:
+                        composite_obj_offset += 2
+                        has_composite_obj = True
+                        lshape_spec = node_right.split("_")[-1]
+                        lshape_spec = ast.literal_eval(lshape_spec)
+                        if lshape_spec[0] != -1:
+                            w_lims = [lshape_spec[0], lshape_spec[0]]
+                        else:
+                            w_lims = [test_canvas.init_canvas.shape[1], test_canvas.init_canvas.shape[1]]
+                        if lshape_spec[1] != -1:
+                            h_lims = [lshape_spec[1], lshape_spec[1]]
+                        else:
+                            h_lims = [test_canvas.init_canvas.shape[1], test_canvas.init_canvas.shape[1]]
+                        obj_refer = self.ObE.sample_objs_with_composite_shape(
+                            n=1, w_lims=w_lims, h_lims=h_lims, 
+                            rainbow_prob=rainbow_prob, 
+                            chosen_concept=node_right.split("_")[0],
+                            n_retry=30,
+                            allow_connect=allow_connect,
+                            parsing_check=parsing_check,
+                            color_avail=color_avail,
+                        )
+                        if obj_refer[0] == None:
+                            placement_result = -1
+                            break
+                        placement_result = test_canvas.placement(
+                            obj_refer[0],
+                        ) # place old obj with free pos
                         if placement_result == -1:
                             break
                     elif node_right.startswith("symmetry"):
@@ -1240,8 +1282,12 @@ class BabyARCDataset(object):
         if parsing_check:
             image_t, _, _ = test_canvas.render(is_plot=False)
             objs = find_connected_components_colordiff(image_t, is_diag=True, color=True)
-            if len(objs) != len(placed_objs):
-                return -1
+            if has_composite_obj:
+                if len(objs) != (len(placed_objs)+composite_obj_offset):
+                    return -1
+            else:
+                if len(objs) != len(placed_objs):
+                    return -1
         
         # check if all relations complied.
         ret_dict = test_canvas.repr_as_dict(nodes, edges)
