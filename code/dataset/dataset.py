@@ -636,7 +636,9 @@ class BabyARCDataset(object):
                 node_old = node_left
                 obj_new = test_canvas.get_obj(nodes[node_new])
                 obj_old = test_canvas.get_obj(nodes[node_old])
-                if rel_n == "IsOutside":
+                if rel_n == "IsNonOverlapXY":
+                    assert False
+                elif rel_n == "IsOutside":
                     placement_result = test_canvas.placement(
                         obj_new, 
                         to_relate_objs=[nodes[node_old]], 
@@ -734,7 +736,62 @@ class BabyARCDataset(object):
                         break
                     
             elif new_node_count == 2:
-                if rel_n == "IsInside":
+                if rel_n == "IsNonOverlapXY":
+                    # UPDATE STATUS: DONE
+                    # obj_anchor = self.ObE.sample_objs(n=1, is_plot=False)[0]
+                    amortize_ratio = [1,2]
+                    ratio = np.random.choice(amortize_ratio)
+                    w_lim = int((test_canvas.init_canvas.shape[1]-1)/ratio)
+                    if ratio == 1:
+                        ratio = np.random.choice([2])
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    else:
+                        h_lim = int((test_canvas.init_canvas.shape[0]-1)/ratio)
+                    obj_anchor = self.ObE.sample_objs_by_bound_area(
+                        n=1, rainbow_prob=rainbow_prob, 
+                        w_lim=w_lim, h_lim=h_lim,
+                        concept_collection=concept_collection
+                    )
+                    if obj_anchor == None or len(obj_anchor) < 1 or obj_anchor[0] == None:
+                        placement_result = -1
+                        break
+                    obj_anchor = obj_anchor[0]
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        obj_anchor = self.ObE.fix_color(obj_anchor, random.choice(color_avail))
+                    placement_result = test_canvas.placement(obj_anchor)
+                    if placement_result == -1:
+                        break
+                    nodes[node_left] = current_id
+                    current_id += 1
+                    
+                    # this may fail, we wamt tp retry
+                    amortize_retry = 5
+                    for _ in range(amortize_retry):
+                        obj_refer = self.ObE.sample_objs_by_bound_area(
+                            n=1, rainbow_prob=rainbow_prob, 
+                            w_lim=w_lim, h_lim=h_lim,
+                            concept_collection=concept_collection
+                        )
+                        if obj_refer == None or len(obj_refer) < 1 or obj_refer[0] == None:
+                            placement_result = -1
+                            break
+                        obj_refer = obj_refer[0]
+                        if color_avail:
+                            # We can sample color now based on color collection.
+                            obj_refer = self.ObE.fix_color(obj_refer, random.choice(color_avail))
+                        placement_result = test_canvas.placement(
+                            obj_refer, to_relate_objs=[nodes[node_left]], 
+                            placement_rule=rel_n, 
+                            connect_allow=allow_connect
+                        )
+                        if placement_result != -1:
+                            break
+                    if placement_result == -1:
+                        break
+                    nodes[node_right] = current_id
+                    current_id += 1
+                elif rel_n == "IsInside":
                     # UPDATE STATUS: DONE
                     # sample a outside reactangle
                     if large_shape:
@@ -1092,7 +1149,9 @@ class BabyARCDataset(object):
                 node_new = node_left if node_left not in placed_objs else node_right
                 node_old = node_left if node_new == node_right else node_right
                 obj_old = test_canvas.get_obj(nodes[node_old])
-                if rel_n == "IsInside":
+                if rel_n == "IsNonOverlapXY":
+                    assert False
+                elif rel_n == "IsInside":
                     if node_new == node_left:
                         # this is unlikely to succeed as the outer obj is randomly sampled
                         # from our object pool.
@@ -1135,7 +1194,7 @@ class BabyARCDataset(object):
                             placement_rule="IsOutside", 
                             connect_allow=allow_connect
                         )
-                        print(placement_result)
+
                     if placement_result == -1:
                         break
                 elif rel_n == "SameAll":
@@ -1291,6 +1350,7 @@ class BabyARCDataset(object):
         
         # check if all relations complied.
         ret_dict = test_canvas.repr_as_dict(nodes, edges)
+        
         for edge, rel in edges.items():
             node_left = edge[0]
             node_right = edge[1]

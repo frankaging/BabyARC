@@ -255,6 +255,35 @@ class Canvas:
                     return i, p_c
         return -1, -1
     
+    def _propose_position_is_non_overlap_xy(
+        self, o_r, o_c, p_r, p_c, rel_r, rel_c,
+        rel_p_r, rel_p_c,
+        connect_allow=False, to_placement_obj=None, 
+        early_stop=True
+    ):
+        def intersect(p_left, p_right, q_left, q_right):
+            return min(p_right, q_right) > max(p_left, q_left)
+        # we do it differently here comparing to others.
+        canvas_r = self.init_canvas.shape[0]
+        canvas_c = self.init_canvas.shape[1]
+        random_pos_iter = []
+        for i in range(0, canvas_r-o_r):
+            for j in range(0, canvas_c-o_c):
+                rec1 = [i,j,i+o_r,j+o_c]
+                rec2 = [rel_p_r,rel_p_c,rel_p_r+rel_r,rel_p_c+rel_c]
+                if (intersect(rec1[0], rec1[2], rec2[0], rec2[2]) & \
+                    intersect(rec1[1], rec1[3], rec2[1], rec2[3])):
+                    continue
+                else:
+                    random_pos_iter.append((i,j))
+                    
+        for pos in random_pos_iter:
+            i = pos[0]
+            j = pos[1]
+            if self._check_exclusive(i, j, to_placement_obj=to_placement_obj, connect_allow=connect_allow):
+                return i, j
+        return -1, -1
+    
     def _propose_position_is_inside(self, o_r, o_c, p_r, p_c, rel_r, rel_c,
                                     rel_p_r, rel_p_c,
                                     connect_allow=False, to_placement_obj=None, 
@@ -352,7 +381,7 @@ class Canvas:
         
         # this part still has some bugs, may not be used for now.
         # some cases we can bypass the pos tag
-        if placement_rule not in ['IsInside', 'IsTouch', 'IsOutside'] and consider_tag:
+        if placement_rule not in ['IsInside', 'IsTouch', 'IsOutside', 'IsNonOverlapXY'] and consider_tag:
             # check any pos tags come with this object
             if "upper" in position_tags and \
                 "lower" in position_tags:
@@ -437,6 +466,17 @@ class Canvas:
                     p_r, p_c = self._propose_position_is_touch(o_r, o_c, p_r, p_c,
                                                                to_relate_obj=to_relate_obj,
                                                                 to_placement_obj=to_placement_obj)
+                elif placement_rule == "IsNonOverlapXY":
+                    to_relate_obj = to_relate_objs[0]
+                    rel_pos = self.opos_map[to_relate_obj]
+                    rel_p_r, rel_p_c = rel_pos[0], rel_pos[1]
+                    rel_obj = self.oid_map[to_relate_obj]
+                    rel_r, rel_c = rel_obj.image_t.shape[0], rel_obj.image_t.shape[1]
+                    p_r, p_c = self._propose_position_is_non_overlap_xy(o_r, o_c, p_r, p_c, rel_r, rel_c,
+                                                                rel_p_r, rel_p_c,
+                                                                to_placement_obj=to_placement_obj, 
+                                                                connect_allow=connect_allow)
+                    
         
         if self._check_exclusive(p_r, p_c, to_placement_obj=to_placement_obj, connect_allow=connect_allow):
             return (p_r, p_c)
@@ -561,6 +601,16 @@ class Canvas:
                                              placement_rule=placement_rule,
                                              to_placement_obj=to_placement_obj,
                                              to_relate_objs=to_relate_objs)
+            elif placement_rule == "IsNonOverlapXY":
+                # we loop through to see if there is any possibilities
+                placement_results = \
+                    self._placement_strategy(canvas_r, canvas_c, obj_r, obj_c, 
+                                             curr_obj.position_tags, 
+                                             placement_r, placement_c, 
+                                             placement_rule=placement_rule,
+                                             to_placement_obj=to_placement_obj,
+                                             to_relate_objs=to_relate_objs, 
+                                             connect_allow=connect_allow)
     
         if placement_results == -1:
             return -1
@@ -957,6 +1007,13 @@ class Canvas:
                             relation_edges[(oid_right, oid_left)].append("IsTouch")
                         else:             
                             relation_edges[(oid_right, oid_left)] = ["IsTouch"]
+                    if IsNonOverlapXY(obj_left.image_t, (r_left, c_left), 
+                                 obj_right.image_t, (r_right, c_right)):
+                        if (oid_left, oid_right) in relation_edges:
+                            relation_edges[(oid_left, oid_right)].append("IsNonOverlapXY")
+                        else:
+                            relation_edges[(oid_left, oid_right)] = ["IsNonOverlapXY"]
+                            
         filtered_relation_edges = OrderedDict({})
         for k, vs in relation_edges.items():
             filtered_relation_edges[k] = list(set(vs))
