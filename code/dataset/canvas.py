@@ -997,6 +997,11 @@ class Canvas:
                             relation_edges[(oid_left, oid_right)].append("IsInside")
                         else:
                             relation_edges[(oid_left, oid_right)] = ["IsInside"]
+                        if (oid_right, oid_left) in relation_edges:
+                            relation_edges[(oid_right, oid_left)].append("IsEnclosed")
+                        else:
+                            relation_edges[(oid_right, oid_left)] = ["IsEnclosed"]
+                            
                     if IsTouch(obj_left.image_t, (r_left, c_left), 
                                  obj_right.image_t, (r_right, c_right)):
                         if (oid_left, oid_right) in relation_edges:

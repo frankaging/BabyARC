@@ -737,7 +737,51 @@ class BabyARCDataset(object):
                         break
                     
             elif new_node_count == 2:
-                if rel_n == "IsNonOverlapXY":
+                if rel_n == "IsEnclosed":
+                    # UPDATE STATUS: DONE
+                    # sample a outside reactangle
+                    if large_shape:
+                        w_lims = [4, test_canvas.init_canvas.shape[1]]
+                        h_lims = [4, test_canvas.init_canvas.shape[0]]
+                    else:
+                        w_lims = [4, max(4,test_canvas.init_canvas.shape[1]//2)]
+                        h_lims = [4, max(4,test_canvas.init_canvas.shape[0]//2)]
+                    # this is to place the object inside referring to the outside object
+                    out_obj = self.ObE.sample_objs_with_rectangle(
+                        n=1, thickness=1, rainbow_prob=rainbow_prob,
+                        w_lims=w_lims, h_lims=h_lims,
+                        concept_limits=concept_limits,
+                    )[0] 
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        out_obj = self.ObE.fix_color(out_obj, random.choice(color_avail))
+                    placement_result = test_canvas.placement(out_obj)
+                    if placement_result == -1:
+                        break
+                    nodes[node_left] = current_id
+                    current_id += 1
+                    in_obj = self.ObE.sample_objs_by_bound_area(
+                        n=1, rainbow_prob=rainbow_prob, 
+                        w_lim=out_obj.image_t.shape[1]-2, h_lim=out_obj.image_t.shape[0]-2,
+                        concept_collection=concept_collection,
+                        concept_limits=concept_limits,
+                    )
+                    if in_obj == None or len(in_obj) < 1 or in_obj[0] == None:
+                        placement_result = -1
+                        break
+                    in_obj = in_obj[0]
+                    if color_avail:
+                        # We can sample color now based on color collection.
+                        in_obj = self.ObE.fix_color(in_obj, random.choice(color_avail))
+                    placement_result = test_canvas.placement(
+                        in_obj, to_relate_objs=[nodes[node_left]], 
+                        placement_rule="IsInside", connect_allow=allow_connect
+                    )
+                    if placement_result == -1:
+                        break
+                    nodes[node_right] = current_id
+                    current_id += 1
+                elif rel_n == "IsNonOverlapXY":
                     # UPDATE STATUS: DONE
                     # obj_anchor = self.ObE.sample_objs(n=1, is_plot=False)[0]
                     amortize_ratio = [1,2]
@@ -1355,7 +1399,7 @@ class BabyARCDataset(object):
         
         # check if all relations complied.
         ret_dict = test_canvas.repr_as_dict(nodes, edges)
-        
+
         for edge, rel in edges.items():
             node_left = edge[0]
             node_right = edge[1]
