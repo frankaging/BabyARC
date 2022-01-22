@@ -128,6 +128,7 @@ class BabyARCDataset(object):
         save_file=None,
         axis_off=False,
         large_shape=False,
+        concept_limits={},
     ):
         relation_num = len(edges)
         nodes = OrderedDict({ })
@@ -750,7 +751,8 @@ class BabyARCDataset(object):
                     obj_anchor = self.ObE.sample_objs_by_bound_area(
                         n=1, rainbow_prob=rainbow_prob, 
                         w_lim=w_lim, h_lim=h_lim,
-                        concept_collection=concept_collection
+                        concept_collection=concept_collection,
+                        concept_limits=concept_limits,
                     )
                     if obj_anchor == None or len(obj_anchor) < 1 or obj_anchor[0] == None:
                         placement_result = -1
@@ -771,7 +773,8 @@ class BabyARCDataset(object):
                         obj_refer = self.ObE.sample_objs_by_bound_area(
                             n=1, rainbow_prob=rainbow_prob, 
                             w_lim=w_lim, h_lim=h_lim,
-                            concept_collection=concept_collection
+                            concept_collection=concept_collection,
+                            concept_limits=concept_limits,
                         )
                         if obj_refer == None or len(obj_refer) < 1 or obj_refer[0] == None:
                             placement_result = -1
@@ -803,7 +806,8 @@ class BabyARCDataset(object):
                     # this is to place the object inside referring to the outside object
                     out_obj = self.ObE.sample_objs_with_rectangle(
                         n=1, thickness=1, rainbow_prob=rainbow_prob,
-                        w_lims=w_lims, h_lims=h_lims
+                        w_lims=w_lims, h_lims=h_lims,
+                        concept_limits=concept_limits,
                     )[0] 
                     if color_avail:
                         # We can sample color now based on color collection.
@@ -816,7 +820,8 @@ class BabyARCDataset(object):
                     in_obj = self.ObE.sample_objs_by_bound_area(
                         n=1, rainbow_prob=rainbow_prob, 
                         w_lim=out_obj.image_t.shape[1]-2, h_lim=out_obj.image_t.shape[0]-2,
-                        concept_collection=concept_collection
+                        concept_collection=concept_collection,
+                        concept_limits=concept_limits,
                     )
                     if in_obj == None or len(in_obj) < 1 or in_obj[0] == None:
                         placement_result = -1

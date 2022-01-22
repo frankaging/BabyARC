@@ -183,7 +183,8 @@ class ObjectEngine:
         concept_collection=["line", "Lshape", "rectangle", 
                             "rectangleSolid", "randomShape", "arcShape", 
                             "Tshape", "Eshape", 
-                            "Hshape", "Cshape", "Ashape", "Fshape"]
+                            "Hshape", "Cshape", "Ashape", "Fshape"],
+        concept_limits={}
     ):
         """
         sample object within the width and height limits.
@@ -200,10 +201,13 @@ class ObjectEngine:
                                 "Hshape", "Cshape", "Ashape", "Fshape"}:
                 if chosen_shape == "line":
                     direction = random.randint(0,1)
-                    if direction == 0:
-                        len_lims=[2,h_lim]
+                    if chosen_shape in concept_limits:
+                        len_lims=concept_limits[chosen_shape]
                     else:
-                        len_lims=[2,w_lim]
+                        if direction == 0:
+                            len_lims=[2,h_lim]
+                        else:
+                            len_lims=[2,w_lim]
                     obj = self.sample_objs_with_line(
                         n=1, len_lims=len_lims, 
                         thickness=1, 
@@ -212,56 +216,116 @@ class ObjectEngine:
                     )[0]
                 elif chosen_shape == "Lshape":
                     direction=random.randint(0,3)
+                    if chosen_shape in concept_limits:
+                        w_lims=concept_limits[chosen_shape]
+                        h_lims=concept_limits[chosen_shape]
+                    else:
+                        w_lims=[2,h_lim]
+                        h_lims=[2,w_lim]
                     obj = self.sample_objs_with_l_shape(
-                        n=1, w_lims=[2,w_lim], h_lims=[2,h_lim], thickness=1, 
+                        n=1, w_lims=w_lims, h_lims=h_lims, thickness=1, 
                         rainbow_prob=rainbow_prob, direction=direction
                     )[0]
                 elif chosen_shape == "Tshape":
+                    if chosen_shape in concept_limits:
+                        w_lims=concept_limits[chosen_shape]
+                        h_lims=concept_limits[chosen_shape]
+                    else:
+                        w_lims=[3,5]
+                        h_lims=[3,5]
                     obj = self.sample_objs_with_t_shape(
-                        n=1, w_lims=[3,5], h_lims=[3,5], 
+                        n=1, w_lims=w_lims, h_lims=h_lims, 
                         rainbow_prob=rainbow_prob,
                     )[0]
                 elif chosen_shape == "Eshape":
+                    if chosen_shape in concept_limits:
+                        w_lims=concept_limits[chosen_shape]
+                        h_lims=concept_limits[chosen_shape]
+                    else:
+                        w_lims=[2,4]
+                        h_lims=[5,6]
                     obj = self.sample_objs_with_e_shape(
-                        n=1, h_lims=[5,6], w_lims=[2,4], 
+                        n=1, w_lims=w_lims, h_lims=h_lims, 
                         rainbow_prob=rainbow_prob,
                     )[0]
                 elif chosen_shape == "Hshape":
+                    if chosen_shape in concept_limits:
+                        w_lims=concept_limits[chosen_shape]
+                        h_lims=concept_limits[chosen_shape]
+                    else:
+                        w_lims=[3,5]
+                        h_lims=[3,5]
                     obj = self.sample_objs_with_h_shape(
-                        n=1, h_lims=[3,5], w_lims=[3,5], 
+                        n=1, w_lims=w_lims, h_lims=h_lims, 
                         rainbow_prob=rainbow_prob,
                     )[0] 
                 elif chosen_shape == "Cshape":
+                    if chosen_shape in concept_limits:
+                        w_lims=concept_limits[chosen_shape]
+                        h_lims=concept_limits[chosen_shape]
+                    else:
+                        w_lims=[2,4]
+                        h_lims=[3,5]
                     obj = self.sample_objs_with_c_shape(
-                        n=1, h_lims=[3,5], w_lims=[2,4], 
+                        n=1, w_lims=w_lims, h_lims=h_lims, 
                         rainbow_prob=rainbow_prob,
                     )[0]   
                 elif chosen_shape == "Ashape":
+                    if chosen_shape in concept_limits:
+                        w_lims=concept_limits[chosen_shape]
+                        h_lims=concept_limits[chosen_shape]
+                    else:
+                        w_lims=[3,5]
+                        h_lims=[4,6]
                     obj = self.sample_objs_with_a_shape(
-                        n=1, h_lims=[4,6], w_lims=[3,5], 
+                        n=1, w_lims=w_lims, h_lims=h_lims, 
                         rainbow_prob=rainbow_prob,
                     )[0]   
                 elif chosen_shape == "Fshape":
+                    if chosen_shape in concept_limits:
+                        w_lims=concept_limits[chosen_shape]
+                        h_lims=concept_limits[chosen_shape]
+                    else:
+                        w_lims=[2,4]
+                        h_lims=[4,6]
                     obj = self.sample_objs_with_f_shape(
-                        n=1, h_lims=[4,6], w_lims=[2,4], 
+                        n=1, w_lims=w_lims, h_lims=h_lims, 
                         rainbow_prob=rainbow_prob,
                     )[0]   
                 elif chosen_shape == "rectangle":
+                    if chosen_shape in concept_limits:
+                        w_lims=concept_limits[chosen_shape]
+                        h_lims=concept_limits[chosen_shape]
+                    else:
+                        w_lims=[2,w_lim]
+                        h_lims=[2,h_lim]
                     obj = self.sample_objs_with_rectangle(
-                        n=1, w_lims=[2,w_lim], h_lims=[2,h_lim], 
+                        n=1, w_lims=w_lims, h_lims=h_lims, 
                         thickness=1, rainbow_prob=rainbow_prob
                     )[0]
                 elif chosen_shape == "rectangleSolid":
+                    if chosen_shape in concept_limits:
+                        w_lims=concept_limits[chosen_shape]
+                        h_lims=concept_limits[chosen_shape]
+                    else:
+                        w_lims=[2,w_lim]
+                        h_lims=[2,h_lim]
                     obj = self.sample_objs_with_rectangle_solid(
-                        n=1, w_lims=[2,w_lim], h_lims=[2,h_lim], 
+                        n=1, w_lims=w_lims, h_lims=h_lims, 
                         rainbow_prob=rainbow_prob
                     )[0]
                 elif chosen_shape == "randomShape":
-                    # Special bounds.
-                    w = random.randint(2,4)
-                    h = random.randint(2,4)
+                    if chosen_shape in concept_limits:
+                        w_lims=concept_limits[chosen_shape]
+                        h_lims=concept_limits[chosen_shape]
+                    else:
+                        # Special bounds.
+                        w = random.randint(2,4)
+                        h = random.randint(2,4)
+                        w_lims=[w,w]
+                        h_lims=[h,h]
                     obj = self.sample_objs_with_random_shape(
-                        n=1, w_lims=[w,w], h_lims=[h,h], 
+                        n=1, w_lims=w_lims, h_lims=h_lims, 
                         rainbow_prob=rainbow_prob
                     )[0]
                 elif chosen_shape == "arcShape":
@@ -270,15 +334,20 @@ class ObjectEngine:
                     shuffle_pool = copy.deepcopy(self.obj_pool)
                     random.shuffle(shuffle_pool)
                     obj = None
-                    
+                    if chosen_shape in concept_limits:
+                        w_lims=concept_limits[chosen_shape]
+                        h_lims=concept_limits[chosen_shape]
+                    else:
+                        w_lims=[2,w_lim]
+                        h_lims=[2,h_lim]
                     # Here we simply go through the object pool and sample arc object!
                     for arc_obj in shuffle_pool:
 
                         obj_img_t = arc_obj.image_t
-                        if obj_img_t.shape[0] <= h_lim and \
-                            obj_img_t.shape[1] <= w_lim and \
-                            obj_img_t.shape[0] >= 2 and \
-                            obj_img_t.shape[1] >= 2:
+                        if obj_img_t.shape[0] <= h_lims[1] and \
+                            obj_img_t.shape[1] <= w_lims[1] and \
+                            obj_img_t.shape[0] >= h_lims[0] and \
+                            obj_img_t.shape[1] >= w_lims[0]:
                             # we add in a random rotated version of objs.
                             obj = self.random_rotation(
                                 self.fix_color(
@@ -1022,13 +1091,19 @@ class ObjectEngine:
                 objs_sampled.append(self.random_color_rainbow(new_obj))
         return objs_sampled
     
-    def sample_objs_with_rectangle(self, n=1, w_lims=[5,10], h_lims=[5,10], thickness=1, 
-                                   rainbow_prob=0.2):
+    def sample_objs_with_rectangle(
+        self, n=1, w_lims=[5,10], h_lims=[5,10], thickness=1, 
+        rainbow_prob=0.2, concept_limits={},
+    ):
         
         objs_sampled = []
         for i in range(n):
-            w = random.randint(w_lims[0], w_lims[1])
-            h = random.randint(h_lims[0], h_lims[1])
+            if "rectangle" in concept_limits.keys():
+                w = random.randint(concept_limits["rectangle"][0], concept_limits["rectangle"][1])
+                h = random.randint(concept_limits["rectangle"][0], concept_limits["rectangle"][1])
+            else:
+                w = random.randint(w_lims[0], w_lims[1])
+                h = random.randint(h_lims[0], h_lims[1])
 
             thickness = thickness
 
