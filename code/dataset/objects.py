@@ -711,7 +711,7 @@ class ObjectEngine:
         
         # now, depends on the input composite type, we make the corresponding canvas
         obj_spec = None
-        upper_bound_size=canvas_size
+        upper_bound_size=int(canvas_size*0.8)
         if chosen_concept == "RectE1a" or chosen_concept == "RectF1a" or chosen_concept == "RectE1b" or chosen_concept == "RectF1b":
             char_shape = "E" if "E" in chosen_concept else "F"
             out_w = np.random.randint(5, upper_bound_size)
