@@ -320,8 +320,8 @@ def IsInside(image1, pos1, image2, pos2):
     
 def IsNonOverlapXY(image1, pos1, image2, pos2):
     """Whether obj1 is inside obj2."""
-    rec1 = (pos1[0], pos1[1], image1.shape[0], image1.shape[1])
-    rec2 = (pos2[0], pos2[1], image2.shape[0], image2.shape[1])
+    rec1 = (pos1[0], pos1[1], pos1[0]+image1.shape[0], pos1[1]+image1.shape[1])
+    rec2 = (pos2[0], pos2[1], pos2[0]+image2.shape[0], pos2[1]+image2.shape[1])
     def intersect(p_left, p_right, q_left, q_right):
         return min(p_right, q_right) > max(p_left, q_left)
     if (intersect(rec1[0], rec1[2], rec2[0], rec2[2]) & \

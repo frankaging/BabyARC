@@ -1018,6 +1018,10 @@ class Canvas:
                             relation_edges[(oid_left, oid_right)].append("IsNonOverlapXY")
                         else:
                             relation_edges[(oid_left, oid_right)] = ["IsNonOverlapXY"]
+                        if (oid_right, oid_left) in relation_edges:
+                            relation_edges[(oid_right, oid_left)].append("IsNonOverlapXY")
+                        else:
+                            relation_edges[(oid_right, oid_left)] = ["IsNonOverlapXY"]
                             
         filtered_relation_edges = OrderedDict({})
         for k, vs in relation_edges.items():
